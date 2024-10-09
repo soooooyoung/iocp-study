@@ -2,46 +2,12 @@
 #pragma once
 #pragma comment(lib, "ws2_32.lib")
 
-#include <winsock2.h>
-#include <Ws2tcpip.h>
-
 #include <thread>
 #include <vector>
+#include "Define.h"
 
-#define MAX_SOCKETBUF 1024
-#define MAX_WORKER_THREAD 4
 #define MAX_CONNECTION_QUEUE 5
 
-enum class IOOperation
-{
-	RECV,
-	SEND
-};
-
-// Overlapped structure 확장
-struct stOverlappedEx
-{
-	WSAOVERLAPPED m_wsaOverlapped;
-	SOCKET m_socketClient;
-	WSABUF m_wsaBuf;
-	char m_szBuf[MAX_SOCKETBUF];
-	IOOperation m_eOperation;
-};
-
-// 클라이언트 정보
-struct stClientInfo
-{
-	SOCKET m_socketClient;
-	stOverlappedEx m_stRecvOverlappedEx;
-	stOverlappedEx m_stSendOverlappedEx;
-
-	stClientInfo()
-	{
-		ZeroMemory(&m_stRecvOverlappedEx, sizeof(stOverlappedEx));
-		ZeroMemory(&m_stSendOverlappedEx, sizeof(stOverlappedEx));
-		m_socketClient = INVALID_SOCKET;
-	}
-};
 
 class IOCompletionPort
 {
@@ -141,6 +107,7 @@ public:
 		mIsAccepterRunning = false;
 
 		// WorkerThread 종료를 위해 PostQueuedCompletionStatus() 호출
+		// GetQueuedCompletionStatus 에서 대기중인 worker thread를 깨우기 위해 PostQueuedCompletionStatus() 호출
 		for (int i = 0; i < MAX_WORKER_THREAD; ++i)
 		{
 			PostQueuedCompletionStatus(mIOCPHandle, 0, NULL, NULL);
@@ -250,18 +217,18 @@ private:
 			{
 			case IOOperation::RECV:
 			{
-				pOverlappedEx->m_szBuf[dwIoSize] = NULL;
-				printf("Recv Data: %s\n", pOverlappedEx->m_szBuf);
+				pClientInfo->m_RecvBuf[dwIoSize] = NULL;
+				printf("Recv Data: %s\n", pClientInfo->m_RecvBuf);
 
 				// 받은 데이터를 클라이언트에게 다시 보냄
-				SendMsg(pClientInfo, pOverlappedEx->m_szBuf, dwIoSize);
+				SendMsg(pClientInfo, pClientInfo->m_RecvBuf, dwIoSize);
 				BindRecv(pClientInfo);
 			}
 			break;
 
 			case IOOperation::SEND:
 			{
-				printf("Send Data: %s\n", pOverlappedEx->m_szBuf);
+				printf("Send Data: %s\n", pClientInfo->m_SendBuf);
 			}
 			break;
 			default:
@@ -352,8 +319,8 @@ private:
 		DWORD dwRecvBytes = 0;
 
 		// Overlapped I/O 시작을 위해 정보를 설정
-		pClientInfo->m_stRecvOverlappedEx.m_wsaBuf.len = MAX_SOCKETBUF;
-		pClientInfo->m_stRecvOverlappedEx.m_wsaBuf.buf = pClientInfo->m_stRecvOverlappedEx.m_szBuf;
+		pClientInfo->m_stRecvOverlappedEx.m_wsaBuf.len = MAX_SOCKBUF;
+		pClientInfo->m_stRecvOverlappedEx.m_wsaBuf.buf = pClientInfo->m_RecvBuf;
 		pClientInfo->m_stRecvOverlappedEx.m_eOperation = IOOperation::RECV;
 
 		// 데이터를 받기 위해 WSARecv() 호출
@@ -378,11 +345,15 @@ private:
 		DWORD dwSendBytes = 0;
 
 		// 전송될 메시지를 복사
-		CopyMemory(pClientInfo->m_stSendOverlappedEx.m_szBuf, pMsg, nLen);
+		CopyMemory(pClientInfo->m_SendBuf, pMsg, nLen);	//  pMsg의 데이터를 m_SendBuf에 복사
+		pClientInfo->m_SendBuf[nLen] = '\0';			// 문자열의 끝을 표시하기 위해 NULL 문자 추가
+		// pMsg가 String일경우 NULL 문자를 추가해야함 (Valid C-style string)
+		// pMsg가 String이 아닐경우 NULL 문자를 추가하지 않아도 됨
+
 
 		// Overlapped I/O 시작을 위해 정보를 설정
 		pClientInfo->m_stSendOverlappedEx.m_wsaBuf.len = nLen;
-		pClientInfo->m_stSendOverlappedEx.m_wsaBuf.buf = pClientInfo->m_stSendOverlappedEx.m_szBuf;
+		pClientInfo->m_stSendOverlappedEx.m_wsaBuf.buf = pClientInfo->m_SendBuf;
 		pClientInfo->m_stSendOverlappedEx.m_eOperation = IOOperation::SEND;
 
 		// 데이터를 보내기 위해 WSASend() 호출
