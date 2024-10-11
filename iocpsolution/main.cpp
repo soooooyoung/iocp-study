@@ -1,20 +1,32 @@
-#include "IOCompletionPort.h"
+#include "EchoServer.h"
+#include <string>
+#include <iostream>
 
-const UINT16 MAX_CLIENTS = 100;
 const UINT16 SERVER_PORT = 9000;
+const UINT16 MAX_CLIENTS = 100;
 
 
 int main()
 {
-	IOCompletionPort iocp;
-	iocp.InitSocket();
+	EchoServer server;
 
-	iocp.BindAndListen(SERVER_PORT);
-	iocp.StartServer(MAX_CLIENTS);
+	server.InitSocket();
 
-	printf("Server Start\n");
-	getchar();
+	server.BindAndListen(SERVER_PORT);
+	server.StartServer(MAX_CLIENTS);
 
-	iocp.DestroyThread();
+	printf("아무 키나 누를 때까지 대기합니다\n");
+	while (true)
+	{
+		std::string inputCmd;
+		std::getline(std::cin, inputCmd);
+
+		if (inputCmd == "quit")
+		{
+			break;
+		}
+	}
+
+	server.DestroyThread();
 	return 0;
 }
