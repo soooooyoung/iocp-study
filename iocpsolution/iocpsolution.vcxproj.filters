@@ -4,7 +4,17 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IOCompletionPort.h" />
-    <ClInclude Include="Define.h" />
+    <ClInclude Include="Define.h">
+      <Filter>ServerNetwork</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPServer.h">
+      <Filter>ServerNetwork</Filter>
+    </ClInclude>
+    <ClInclude Include="EchoServer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="ServerNetwork">
+      <UniqueIdentifier>{a6a21d97-047e-441b-97cf-9dde64011d32}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
