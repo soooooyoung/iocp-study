@@ -238,7 +238,7 @@ private:
 			1,
 			&dwRecvNumBytes,
 			0,
-			(LPWSAOVERLAPPED) & (pClientInfo->m_stRecvOverlappedEx),
+			(LPWSAOVERLAPPED) & (pClientInfo->m_stSendOverlappedEx),
 			NULL);
 
 		if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
