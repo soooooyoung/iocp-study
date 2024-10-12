@@ -13,7 +13,7 @@ int main()
 	server.InitSocket();
 
 	server.BindAndListen(SERVER_PORT);
-	server.StartServer(MAX_CLIENTS);
+	server.Run(MAX_CLIENTS);
 
 	printf("아무 키나 누를 때까지 대기합니다\n");
 	while (true)
@@ -27,6 +27,6 @@ int main()
 		}
 	}
 
-	server.DestroyThread();
+	server.End();
 	return 0;
 }

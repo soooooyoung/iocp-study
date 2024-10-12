@@ -11,6 +11,10 @@
       <Filter>ServerNetwork</Filter>
     </ClInclude>
     <ClInclude Include="EchoServer.h" />
+    <ClInclude Include="Packet.h" />
+    <ClInclude Include="ClientInfo.h">
+      <Filter>ServerNetwork</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ServerNetwork">
