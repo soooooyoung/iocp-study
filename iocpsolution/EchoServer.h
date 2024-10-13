@@ -39,7 +39,7 @@ public:
 	void Run(const UINT32 maxClient)
 	{
 		mIsRunProcessThread = true;
-		mProcessThread = std::thread([this]() {ProcessPacket(); });
+		mProcessThread = std::thread([this]() { ProcessPacket(); });
 
 		StartServer(maxClient);
 	}

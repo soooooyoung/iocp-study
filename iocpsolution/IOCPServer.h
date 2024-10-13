@@ -2,7 +2,7 @@
 #pragma comment(lib, "ws2_32.lib")
 
 #include "Define.h"
-#include "ClientInfo.h"
+#include "NetworkClient.h"
 #include <thread>
 #include <vector>
 
@@ -159,7 +159,7 @@ private:
 	}
 
 
-	stClientInfo* GetEmptyClientInfo()
+	NetworkClient* GetEmptyClientInfo()
 	{
 		for (auto& client : mClientInfos)
 		{
@@ -172,7 +172,7 @@ private:
 		return nullptr;
 	}
 
-	stClientInfo* GetClientInfo(const UINT32 index)
+	NetworkClient* GetClientInfo(const UINT32 index)
 	{
 		return &mClientInfos[index];
 	}
@@ -181,7 +181,7 @@ private:
 
 	void WorkerThread()
 	{
-		stClientInfo* pClientInfo = nullptr;
+		NetworkClient* pClientInfo = nullptr;
 		BOOL bSuccess = TRUE;
 		DWORD dwIoSize = 0;
 		LPOVERLAPPED lpOverlapped = NULL;
@@ -238,7 +238,7 @@ private:
 
 		while (mIsAcceptorRun)
 		{
-			stClientInfo* pClientInfo = GetEmptyClientInfo();
+			NetworkClient* pClientInfo = GetEmptyClientInfo();
 			if (NULL == pClientInfo)
 			{
 				printf("[에러] Client Full \n");
@@ -264,7 +264,7 @@ private:
 	}
 
 	//소켓의 연결을 종료 시킨다.
-	void CloseSocket(stClientInfo* pClientInfo, bool bIsForce = false)
+	void CloseSocket(NetworkClient* pClientInfo, bool bIsForce = false)
 	{
 		auto clientIndex = pClientInfo->GetIndex();
 
@@ -274,7 +274,7 @@ private:
 	}
 
 
-	std::vector<stClientInfo> mClientInfos;
+	std::vector<NetworkClient> mClientInfos;
 	SOCKET mListenSocket = INVALID_SOCKET;
 	int mClientCount = 0;
 

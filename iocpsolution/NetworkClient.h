@@ -2,10 +2,10 @@
 #include "Define.h"
 #include <stdio.h>
 
-class stClientInfo
+class NetworkClient
 {
 public:
-	stClientInfo()
+	NetworkClient()
 	{
 		ZeroMemory(&mRecvOverlappedEx, sizeof(stOverlappedEx));
 		mSock = INVALID_SOCKET;

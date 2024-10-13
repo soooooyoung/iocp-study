@@ -12,7 +12,7 @@
     </ClInclude>
     <ClInclude Include="EchoServer.h" />
     <ClInclude Include="Packet.h" />
-    <ClInclude Include="ClientInfo.h">
+    <ClInclude Include="NetworkClient.h">
       <Filter>ServerNetwork</Filter>
     </ClInclude>
   </ItemGroup>
