@@ -1,5 +1,6 @@
 ﻿#pragma once
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "mswsock.lib")
 
 #include "Define.h"
 #include "NetworkClient.h"
@@ -16,7 +17,7 @@ public:
 		WSACleanup();
 	}
 
-	bool InitSocket()
+	bool Init(const UINT32 maxIOWorkerThreadCount_)
 	{
 		WSADATA wsaData;
 
@@ -34,6 +35,8 @@ public:
 			printf("[에러] socket() 함수 실패: %d \n", WSAGetLastError());
 			return false;
 		}
+
+		MaxIOWorkerThreadCount = maxIOWorkerThreadCount_;
 
 		printf("소켓 초기화 성공 \n");
 		return true;
@@ -53,10 +56,25 @@ public:
 			return false;
 		}
 
+		// 접속 대기큐 5개
 		nRet = listen(mListenSocket, 5);
 		if (0 != nRet)
 		{
 			printf("[에러] listen()함수 실패 : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, MaxIOWorkerThreadCount);
+		if (NULL == mIOCPHandle)
+		{
+			printf("[에러] CreateIoCompletionPort() 함수 실패: %d\n", GetLastError());
+			return false;
+		}
+
+		auto hIOCP = CreateIoCompletionPort((HANDLE)mListenSocket, mIOCPHandle, (UINT32)0, 0);
+		if (hIOCP == INVALID_HANDLE_VALUE)
+		{
+			printf("[에러] listen socket IOCP bind 실패: %d\n", WSAGetLastError());
 			return false;
 		}
 
@@ -67,14 +85,6 @@ public:
 	bool StartServer(const UINT32 maxClientCount)
 	{
 		CreateClient(maxClientCount);
-
-		mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, MAX_WORKER_THREAD);
-
-		if (NULL == mIOCPHandle)
-		{
-			printf("[에러] CreateIoCompletionPort() 함수 실패: %d\n", GetLastError());
-			return false;
-		}
 
 		bool bRet = CreateWorkerThread();
 		if (false == bRet) {
@@ -135,7 +145,7 @@ private:
 		for (UINT32 i = 0; i < maxClientCount; ++i)
 		{
 			auto client = new NetworkClient();
-			client->Init(i);
+			client->Init(i, mIOCPHandle);
 
 			mClientInfos.push_back(client);
 		}
@@ -144,7 +154,7 @@ private:
 	bool CreateWorkerThread()
 	{
 		unsigned int uiThreadId = 0;
-		for (int i = 0; i < MAX_WORKER_THREAD; i++)
+		for (int i = 0; i < MaxIOWorkerThreadCount; i++)
 		{
 			mIOWorkerThreads.emplace_back([this]() { WorkerThread(); });
 		}
@@ -204,59 +214,84 @@ private:
 				continue;
 			}
 
-			if (FALSE == bSuccess || (0 == dwIoSize && TRUE == bSuccess))
+
+			auto pOverlappedEx = (stOverlappedEx*)lpOverlapped;
+
+			if (FALSE == bSuccess || (0 == dwIoSize && IOOperation::ACCEPT != pOverlappedEx->m_eOperation))
 			{
 				CloseSocket(pClientInfo);
 				continue;
 			}
 
-			auto pOverlappedEx = (stOverlappedEx*)lpOverlapped;
+			switch (pOverlappedEx->m_eOperation)
+			{
+			case IOOperation::ACCEPT:
+			{
+				pClientInfo = GetClientInfo(pOverlappedEx->mSessionIndex);
+				if (nullptr == pClientInfo)
+				{
+					printf("Client Index(%d) == nullptr\n", pOverlappedEx->mSessionIndex);
+					break;
+				}
 
-			if (IOOperation::RECV == pOverlappedEx->m_eOperation)
+				if (pClientInfo->AcceptCompletion())
+				{
+					++mClientCount;
+					OnConnect(pClientInfo->GetIndex());
+				}
+				else
+				{
+					CloseSocket(pClientInfo, true);
+				}
+			}
+			case IOOperation::RECV:
 			{
 				OnReceive(pClientInfo->GetIndex(), dwIoSize, pClientInfo->RecvBuffer());
 				pClientInfo->BindRecv();
 			}
-			else if (IOOperation::SEND == pOverlappedEx->m_eOperation)
+			break;
+
+			case IOOperation::SEND:
 			{
 				pClientInfo->SendCompleted(dwIoSize);
 			}
-			else
-			{
+			break;
+
+			default:
 				printf("Client Index(%d)에서 예외 상황\n", pClientInfo->GetIndex());
+				break;
 			}
 		}
 	}
 
 	void AcceptorThread()
 	{
-		SOCKADDR_IN stClientAddr;
-		int nAddrLen = sizeof(SOCKADDR_IN);
-
 		while (mIsAcceptorRun)
 		{
-			NetworkClient* pClientInfo = GetEmptyClientInfo();
-			if (NULL == pClientInfo)
+			auto curTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+			for (auto client : mClientInfos)
 			{
-				printf("[에러] Client Full \n");
-				return;
+				if (client->IsConnected())
+				{
+					continue;
+				}
+
+				if ((UINT64)curTimeSec < client->GetLatestClosedTimeSec())
+				{
+					continue;
+				}
+
+				auto diff = curTimeSec - client->GetLatestClosedTimeSec();
+				if (diff < REUSE_SESSION_WAIT_TIME_SEC)
+				{
+					continue;
+				}
+
+				client->PostAccept(mListenSocket, curTimeSec);
 			}
 
-			auto newSocket = accept(mListenSocket, (SOCKADDR*)&stClientAddr, &nAddrLen);
-			if (INVALID_SOCKET == newSocket)
-			{
-				printf("[에러] INVALID_SOCKET \n");
-				continue;
-			}
-
-			if (false == pClientInfo->OnConnect(mIOCPHandle, newSocket))
-			{
-				printf("[에러]  pClientInfo->OnConnect \n");
-				pClientInfo->Close(true);
-			}
-
-			OnConnect(pClientInfo->GetIndex());
-			++mClientCount;
+			std::this_thread::sleep_for(std::chrono::milliseconds(32));
 		}
 	}
 
@@ -270,6 +305,7 @@ private:
 		OnClose(clientIndex);
 	}
 
+	UINT32 MaxIOWorkerThreadCount = 0;
 
 	std::vector<NetworkClient*> mClientInfos;
 	SOCKET mListenSocket = INVALID_SOCKET;

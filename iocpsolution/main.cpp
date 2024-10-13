@@ -4,13 +4,13 @@
 
 const UINT16 SERVER_PORT = 9000;
 const UINT16 MAX_CLIENTS = 100;
-
+const UINT32 MAX_IO_WORKER_THREAD = 4;
 
 int main()
 {
 	EchoServer server;
 
-	server.InitSocket();
+	server.Init(MAX_IO_WORKER_THREAD);
 
 	server.BindAndListen(SERVER_PORT);
 	server.Run(MAX_CLIENTS);

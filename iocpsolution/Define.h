@@ -3,13 +3,15 @@
 
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#include <MSWSock.h>
 
-const UINT32 MAX_SOCKBUF = 256; 
+const UINT32 MAX_SOCK_RECVBUF = 256;
 const UINT32 MAX_SOCK_SENDBUF = 4096;
-const UINT32 MAX_WORKER_THREAD = 4;
+const UINT64 REUSE_SESSION_WAIT_TIME_SEC = 3;
 
 enum class IOOperation
 {
+	ACCEPT,
 	SEND,
 	RECV
 };
@@ -17,7 +19,7 @@ enum class IOOperation
 struct stOverlappedEx
 {
 	WSAOVERLAPPED m_wsaOverlapped;
-	SOCKET m_socketClient;
 	WSABUF m_wsaBuf;				// pointer to the buffer
 	IOOperation m_eOperation;
+	UINT32 mSessionIndex;
 };
