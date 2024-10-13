@@ -87,24 +87,12 @@ public:
 			return false;
 		}
 
-		bRet = CreateSenderThread();
-		if (false == bRet)
-		{
-			return false;
-		}
-
 		printf("서버 시작 \n");
 		return true;
 	}
 
 	void DestroyThread()
 	{
-		mIsSenderRun = false;
-		if (mSenderThread.joinable())
-		{
-			mSenderThread.join();
-		}
-
 		mIsWorkerRun = false;
 		CloseHandle(mIOCPHandle);
 
@@ -171,15 +159,6 @@ private:
 		printf("AcceptThread 시작 \n");
 		return true;
 	}
-
-	bool CreateSenderThread()
-	{
-		mIsSenderRun = true;
-		mSenderThread = std::thread([this]() { SendThread(); });
-		printf("SendThread 시작 \n");
-		return true;
-	}
-
 
 	NetworkClient* GetEmptyClientInfo()
 	{
@@ -281,23 +260,6 @@ private:
 		}
 	}
 
-	void SendThread()
-	{
-		while (mIsSenderRun)
-		{
-			for (auto& client : mClientInfos)
-			{
-				if (client->IsConnected())
-				{
-					client->SendIO();
-				}
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-	}
-
-
 	//소켓의 연결을 종료 시킨다.
 	void CloseSocket(NetworkClient* pClientInfo, bool bIsForce = false)
 	{
@@ -315,11 +277,9 @@ private:
 
 	std::vector<std::thread> mIOWorkerThreads;
 	std::thread mAcceptorThread;
-	std::thread mSenderThread;
 
 	HANDLE mIOCPHandle = INVALID_HANDLE_VALUE;
 
 	bool mIsWorkerRun = true;
 	bool mIsAcceptorRun = true;
-	bool mIsSenderRun = true;
 };
