@@ -87,12 +87,24 @@ public:
 			return false;
 		}
 
+		bRet = CreateSenderThread();
+		if (false == bRet)
+		{
+			return false;
+		}
+
 		printf("서버 시작 \n");
 		return true;
 	}
 
 	void DestroyThread()
 	{
+		mIsSenderRun = false;
+		if (mSenderThread.joinable())
+		{
+			mSenderThread.join();
+		}
+
 		mIsWorkerRun = false;
 		CloseHandle(mIOCPHandle);
 
@@ -134,8 +146,10 @@ private:
 	{
 		for (UINT32 i = 0; i < maxClientCount; ++i)
 		{
-			mClientInfos.emplace_back();
-			mClientInfos[i].Init(i);
+			auto client = new NetworkClient();
+			client->Init(i);
+
+			mClientInfos.push_back(client);
 		}
 	}
 
@@ -144,7 +158,7 @@ private:
 		unsigned int uiThreadId = 0;
 		for (int i = 0; i < MAX_WORKER_THREAD; i++)
 		{
-			mIOWorkerThreads.emplace_back([this]() {WorkerThread(); });
+			mIOWorkerThreads.emplace_back([this]() { WorkerThread(); });
 		}
 
 		printf("WorkerThread 시작...\n");
@@ -153,8 +167,16 @@ private:
 
 	bool CreateAcceptorThread()
 	{
-		mAcceptorThread = std::thread([this]() {AcceptorThread(); });
+		mAcceptorThread = std::thread([this]() { AcceptorThread(); });
 		printf("AcceptThread 시작 \n");
+		return true;
+	}
+
+	bool CreateSenderThread()
+	{
+		mIsSenderRun = true;
+		mSenderThread = std::thread([this]() { SendThread(); });
+		printf("SendThread 시작 \n");
 		return true;
 	}
 
@@ -163,9 +185,9 @@ private:
 	{
 		for (auto& client : mClientInfos)
 		{
-			if (false == client.IsConnected())
+			if (false == client->IsConnected())
 			{
-				return &client;
+				return client;
 			}
 		}
 
@@ -174,10 +196,8 @@ private:
 
 	NetworkClient* GetClientInfo(const UINT32 index)
 	{
-		return &mClientInfos[index];
+		return mClientInfos[index];
 	}
-
-
 
 	void WorkerThread()
 	{
@@ -220,13 +240,11 @@ private:
 			}
 			else if (IOOperation::SEND == pOverlappedEx->m_eOperation)
 			{
-				//delete[] pOverlappedEx->m_wsaBuf.buf;
-				//delete pOverlappedEx;
 				pClientInfo->SendCompleted(dwIoSize);
 			}
 			else
 			{
-				printf("Client Index(%d)에서 예외 상황\n", (int)pClientInfo->GetIndex());
+				printf("Client Index(%d)에서 예외 상황\n", pClientInfo->GetIndex());
 			}
 		}
 	}
@@ -263,6 +281,23 @@ private:
 		}
 	}
 
+	void SendThread()
+	{
+		while (mIsSenderRun)
+		{
+			for (auto& client : mClientInfos)
+			{
+				if (client->IsConnected())
+				{
+					client->SendIO();
+				}
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
+	}
+
+
 	//소켓의 연결을 종료 시킨다.
 	void CloseSocket(NetworkClient* pClientInfo, bool bIsForce = false)
 	{
@@ -274,16 +309,17 @@ private:
 	}
 
 
-	std::vector<NetworkClient> mClientInfos;
+	std::vector<NetworkClient*> mClientInfos;
 	SOCKET mListenSocket = INVALID_SOCKET;
 	int mClientCount = 0;
 
 	std::vector<std::thread> mIOWorkerThreads;
 	std::thread mAcceptorThread;
+	std::thread mSenderThread;
 
 	HANDLE mIOCPHandle = INVALID_HANDLE_VALUE;
 
 	bool mIsWorkerRun = true;
 	bool mIsAcceptorRun = true;
-	char mSocketBuf[1024] = { 0, };
+	bool mIsSenderRun = true;
 };

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Define.h"
 #include <stdio.h>
+#include <mutex>
 
 class NetworkClient
 {
@@ -8,8 +9,10 @@ public:
 	NetworkClient()
 	{
 		ZeroMemory(&mRecvOverlappedEx, sizeof(stOverlappedEx));
+		ZeroMemory(&mSendOverlappedEx, sizeof(stOverlappedEx));
 		mSock = INVALID_SOCKET;
 	}
+	~NetworkClient() = default;
 
 	void Init(const UINT32 index)
 	{
@@ -97,22 +100,51 @@ public:
 		return true;
 	}
 
+	// 1개의 스레드에서만 호출해야 한다!
 	bool SendMsg(const UINT32 dataSize_, char* pMsg_)
 	{
-		auto sendOverlappedEx = new stOverlappedEx;
-		ZeroMemory(sendOverlappedEx, sizeof(stOverlappedEx));
-		sendOverlappedEx->m_wsaBuf.len = dataSize_;
-		sendOverlappedEx->m_wsaBuf.buf = new char[dataSize_];
-		CopyMemory(sendOverlappedEx->m_wsaBuf.buf, pMsg_, dataSize_);
-		sendOverlappedEx->m_eOperation = IOOperation::SEND;
+		std::lock_guard<std::mutex> guard(mSendLock);
+
+		// 초과 되면 데이터를 덮어 씌울수 있음
+		if (mSendPos + dataSize_ > MAX_SOCK_SENDBUF)
+		{
+			/*printf("[에러] 송신 버퍼 초과\n");
+			return false;*/
+			mSendPos = 0;
+		}
+
+		auto pSendBuf = &mSendBuf[mSendPos];
+
+		CopyMemory(pSendBuf, pMsg_, dataSize_);
+		mSendPos += dataSize_;
+
+		return true;
+	}
+
+	bool SendIO()
+	{
+		if (mSendPos <= 0 || mIsSending)
+		{
+			return false;
+		}
+
+		std::lock_guard<std::mutex> guard(mSendLock);
+
+		mIsSending = true;
+
+		CopyMemory(mSendingBuf, &mSendBuf[0], mSendPos);
+
+		mSendOverlappedEx.m_wsaBuf.len = mSendPos;
+		mSendOverlappedEx.m_wsaBuf.buf = &mSendingBuf[0];
+		mSendOverlappedEx.m_eOperation = IOOperation::SEND;
 
 		DWORD dwRecvNumBytes = 0;
 		int nRet = WSASend(mSock,
-			&(sendOverlappedEx->m_wsaBuf),
+			&(mSendOverlappedEx.m_wsaBuf),
 			1,
 			&dwRecvNumBytes,
 			0,
-			(LPWSAOVERLAPPED)sendOverlappedEx,
+			(LPWSAOVERLAPPED) & (mSendOverlappedEx),
 			NULL);
 
 		if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
@@ -121,22 +153,37 @@ public:
 			return false;
 		}
 
+		mSendPos = 0;
 		return true;
 	}
 
-
 	void SendCompleted(const UINT32 dataSize_)
 	{
+		mIsSending = false;
 		printf("[송신완료] bytes: %d\n", dataSize_);
 	}
 
 	void Clear() {
-
+		ZeroMemory(&mRecvOverlappedEx, sizeof(stOverlappedEx));
+		ZeroMemory(&mSendOverlappedEx, sizeof(stOverlappedEx));
+		ZeroMemory(mRecvBuf, MAX_SOCKBUF);
+		ZeroMemory(mSendBuf, MAX_SOCK_SENDBUF);
+		ZeroMemory(mSendingBuf, MAX_SOCK_SENDBUF);
+		mSendPos = 0;
+		mIsSending = false;
 	}
+
 private: 
 	INT32 mIndex = 0;
 	SOCKET mSock; // 연결되는 소켓
 	stOverlappedEx mRecvOverlappedEx; // RECV Overlapped I/O 작업용 변수
+	stOverlappedEx mSendOverlappedEx; // SEND Overlapped I/O 작업용 변수
 
 	char mRecvBuf[MAX_SOCKBUF]; // 데이터 버퍼
+
+	std::mutex mSendLock;
+	bool mIsSending = false;
+	UINT64 mSendPos = 0;
+	char mSendBuf[MAX_SOCK_SENDBUF];
+	char mSendingBuf[MAX_SOCK_SENDBUF];
 };
