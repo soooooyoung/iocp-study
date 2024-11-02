@@ -46,14 +46,14 @@ public:
 	{
 		SOCKADDR_IN stServerAddr;
 		stServerAddr.sin_family = AF_INET;
-		stServerAddr.sin_port = htons(nBindPort); // 서버의 포트 설정
+		stServerAddr.sin_port = htons(static_cast<u_short>(nBindPort)); // 서버의 포트 설정
 
 		// 모든 주소에서 접속을 허용
-		stServerAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+		stServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 		// 지정한 서버 주소와 cIOCompletionPort::mListenSocket을 바인딩
 		int nRet = bind(mListenSocket, (SOCKADDR*)&stServerAddr, sizeof(SOCKADDR_IN));
-		if (SOCKET_ERROR == nRet)
+		if (0 != nRet)
 		{
 			printf("bind() Error: %d\n", WSAGetLastError());
 			return false;
@@ -61,7 +61,7 @@ public:
 
 		// 클라이언트의 접속 요청을 받아들이기 위해 소켓을 등록
 		nRet = listen(mListenSocket, MAX_CONNECTION_QUEUE); // 접속 대기큐의 크기는 5
-		if (SOCKET_ERROR == nRet)
+		if (0 != nRet)
 		{
 			printf("listen() Error: %d\n", WSAGetLastError());
 			return false;
@@ -99,26 +99,22 @@ public:
 			printf("CreateAcceptorThread() Error\n");
 			return false;
 		}
+
+		printf("서버 시작\n");
+		return true;
 	}
 
 	void DestroyThread()
 	{
 		mIsWorkerRunning = false;
 		mIsAccepterRunning = false;
+		CloseHandle(mIOCPHandle);
 
-		// WorkerThread 종료를 위해 PostQueuedCompletionStatus() 호출
-		// GetQueuedCompletionStatus 에서 대기중인 worker thread를 깨우기 위해 PostQueuedCompletionStatus() 호출
-		for (int i = 0; i < MAX_WORKER_THREAD; ++i)
+		for (auto& th : mIOWorkerThreads)
 		{
-			PostQueuedCompletionStatus(mIOCPHandle, 0, NULL, NULL);
-		}
-
-		// WorkerThread 종료 대기
-		for (auto& workerThread : mIOWorkerThreads)
-		{
-			if (workerThread.joinable())
+			if (th.joinable())
 			{
-				workerThread.join();
+				th.join();
 			}
 		}
 
@@ -128,19 +124,6 @@ public:
 		{
 			mAcceptorThread.join();
 		}
-
-		// 모든 클라이언트 소켓 닫기
-		for (auto& clientInfo : mClientInfos)
-		{
-			if (clientInfo.m_socketClient != INVALID_SOCKET)
-			{
-				CloseSocket(&clientInfo);
-			}
-		}
-
-		// IOCP 객체 닫기
-		CloseHandle(mIOCPHandle);
-
 		printf("DestroyThread() Success\n");
 	}
 
@@ -155,8 +138,6 @@ private:
 
 	bool CreateWorkerThread()
 	{
-		unsigned int uiThreadId = 0;
-
 		// WaitingThread Queue에 대기 상태로 넣을 쓰레드들 생성 권장 개수는 CPU 코어 개수 * 2 + 1
 		for (int i = 0; i < MAX_WORKER_THREAD; ++i)
 		{
@@ -235,6 +216,7 @@ private:
 			{
 				printf("socket(%d) Unknown Operation\n", (int)pClientInfo->m_socketClient);
 			}
+			break;
 			}
 		}
 	}
@@ -324,7 +306,13 @@ private:
 		pClientInfo->m_stRecvOverlappedEx.m_eOperation = IOOperation::RECV;
 
 		// 데이터를 받기 위해 WSARecv() 호출
-		int nRet = WSARecv(pClientInfo->m_socketClient, &pClientInfo->m_stRecvOverlappedEx.m_wsaBuf, 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)&pClientInfo->m_stRecvOverlappedEx, NULL);
+		int nRet = WSARecv(pClientInfo->m_socketClient, 
+			&pClientInfo->m_stRecvOverlappedEx.m_wsaBuf, 
+			1, 
+			&dwRecvBytes, 
+			&dwFlag, 
+			(LPWSAOVERLAPPED)&pClientInfo->m_stRecvOverlappedEx, 
+			NULL);
 
 		if (SOCKET_ERROR == nRet)
 		{
