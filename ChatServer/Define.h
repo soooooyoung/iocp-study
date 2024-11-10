@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <winsock2.h>
 #include <Ws2tcpip.h>
@@ -6,7 +6,7 @@
 
 const UINT32 MAX_SOCK_RECVBUF = 256;
 const UINT32 MAX_SOCK_SENDBUF = 4096;
-const UINT64 RE_USE_SESSION_WAIT_TIMESEC = 3;
+const UINT64 REUSE_SESSION_WAIT_TIMESEC = 3;
 
 enum class IOOperation
 {

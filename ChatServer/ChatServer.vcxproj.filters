@@ -4,6 +4,12 @@
     <Filter Include="ServerNetwork">
       <UniqueIdentifier>{216e0929-06ab-46a3-9d8d-9af1a9a99b93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Payload">
+      <UniqueIdentifier>{8280b7e8-35ed-45b1-a8ba-0b194e42f9d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{4b000ba4-ca8c-492d-837b-101397402c16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Define.h">
@@ -15,5 +21,25 @@
     <ClInclude Include="IOCPServer.h">
       <Filter>ServerNetwork</Filter>
     </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>Payload</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketManager.h">
+      <Filter>Payload</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatServer.h" />
+    <ClInclude Include="User.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="UserManager.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorCode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PacketManager.cpp">
+      <Filter>Payload</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

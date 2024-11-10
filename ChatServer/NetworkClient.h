@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Define.h"
 #include <stdio.h>
@@ -35,6 +35,7 @@ public:
 	void Clear()
 	{
 	}
+
 	bool OnConnect(HANDLE iocpHandle_, SOCKET socket_)
 	{
 		mSocket = socket_;
@@ -51,11 +52,61 @@ public:
 		return BindRecv();
 	}
 
-	//void OnDisconnect()
-	//{
-	//	mIsConnect = 0;
-	//	mLatestClosedTimeSec = time(nullptr);
-	//}
+	void Close(bool bIsForce = false)
+	{
+		struct linger stLinger = { 0,0 }; // SO_DONTLINGER로 설정
+
+		// bIsForce가 true이면 SO_LINGER, timeout = 0으로 설정하여 강제 종료
+		if (true == bIsForce)
+		{
+			stLinger.l_onoff = 1;
+		}
+
+		shutdown(mSocket, SD_BOTH);
+
+		setsockopt(mSocket, SOL_SOCKET, SO_LINGER, (char*)&stLinger, sizeof(stLinger));
+
+		mIsConnect = 0;
+		mLatestClosedTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+		closesocket(mSocket);
+		mSocket = INVALID_SOCKET;
+	}
+
+	bool PostAccept(SOCKET listenSocket, const UINT64 curTimeSec)
+	{
+		printf_s("PostAccept : SessionIndex(%d)\n", mIndex);
+
+		mLatestClosedTimeSec = UINT32_MAX;
+		mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+		if (INVALID_SOCKET == mSocket)
+		{
+			printf_s("client WSASocket Error : %d\n", WSAGetLastError());
+			return false;
+		}
+
+		ZeroMemory(&mAcceptContext, sizeof(stOverlappedEx));
+
+		DWORD dwRecvNumBytes = 0;
+		DWORD dwFlag = 0;
+
+		mAcceptContext.m_wsaBuf.len = 0;
+		mAcceptContext.m_wsaBuf.buf = nullptr;
+		mAcceptContext.m_eOperation = IOOperation::ACCEPT;
+		mAcceptContext.SessionIndex = mIndex;
+
+		if (FALSE == AcceptEx(listenSocket, mSocket, mAcceptBuf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &dwRecvNumBytes, (LPOVERLAPPED)&mAcceptContext))
+		{
+			if (WSAGetLastError() != ERROR_IO_PENDING)
+			{
+				printf_s("AcceptEx Error : %d\n", WSAGetLastError());
+				return false;
+			}
+		}
+
+		return true;
+	}
 
 	bool AcceptCompletion()
 	{
