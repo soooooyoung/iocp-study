@@ -76,7 +76,7 @@ struct PACKET_HEADER
 	UINT8 Type; // 압축여부 암호화여부 등
 };
 
-const UINT32 PACKET_HEADAER_LENGTH = sizeof(PACKET_HEADER);
+const UINT32 PACKET_HEADER_LENGTH = sizeof(PACKET_HEADER);
 
 
 
