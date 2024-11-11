@@ -1,12 +1,10 @@
-#pragma once
-
-#include <memory>
-#include <basetsd.h>
-#include <vector>
+﻿#pragma once
+#include <concurrent_vector.h>
 
 const UINT64 MAX_LISTEN_COUNT = 1;
 
 class NetworkClient;
+class ListenClient;
 class IOCPHandler;
 class NetworkManager
 {
@@ -15,11 +13,15 @@ public:
 	virtual ~NetworkManager() {}
 
 	bool Init();
-	bool AddListener(int port);
-private:
-	bool _AddClient(std::shared_ptr<NetworkClient> client);
-	std::weak_ptr<NetworkClient> _GetClient(UINT32 index);
 
-	IOCPHandler mIOCPHandler;
-	std::vector<std::shared_ptr<NetworkClient>> mClientList;
+	bool AddClient(std::shared_ptr<NetworkClient> client);
+	bool AddListener(int port);
+
+	std::weak_ptr<NetworkClient> GetClient(UINT32 index);
+private:
+	IOCPHandler* mIOCPHandler;
+	std::array<std::shared_ptr<ListenClient>, MAX_LISTEN_COUNT> mListenClientList;
+
+	// Connected Clients, Uses Index as SessionID
+	concurrency::concurrent_vector<std::shared_ptr<NetworkClient>> mClientList;
 };

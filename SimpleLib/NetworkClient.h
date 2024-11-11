@@ -1,10 +1,6 @@
-#pragma once
-#include <Winsock2.h>
-#include <mutex>
-#include "SecureQueue.h"
-#include "StaticPool.h"
+﻿#pragma once
 
-struct NetworkContext;
+class NetworkContext;
 class NetworkClient : public PoolObject<NetworkClient>
 {
 public:

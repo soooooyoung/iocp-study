@@ -24,9 +24,7 @@
       <Filter>Network\Client</Filter>
     </ClInclude>
     <ClInclude Include="ServerApp.h" />
-    <ClInclude Include="PoolObject.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
+    <ClInclude Include="SimpleCore.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IOCPHandler.cpp" />
@@ -40,6 +38,10 @@
       <Filter>Network\Client</Filter>
     </ClCompile>
     <ClCompile Include="ServerApp.cpp" />
+    <ClCompile Include="NetworkContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleCore.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Utility">

@@ -1,14 +1,9 @@
+#include "SimpleCore.h"
 #include "NetworkManager.h"
 #include "IOCPHandler.h"
 #include "NetworkClient.h"
 #include "ListenClient.h"
-#include "StaticPool.h"
 
-
-NetworkManager::NetworkManager()
-{
-	
-}
 
 bool NetworkManager::Init()
 {
@@ -17,14 +12,19 @@ bool NetworkManager::Init()
 	StaticPool<NetworkContext>::GetInstance().Reserve(100);
 	mClientList.reserve(11);
 
-	if (false == mIOCPHandler.Init())
+	mIOCPHandler = new IOCPHandler();
+	if (false == mIOCPHandler->Init())
 	{
 		return false;
 	}
 
-	if (false == AddListener(9000))
+	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
 	{
-		return false;
+		// FIXME: hardcoded port
+		if (false == AddListener(9000 + i))
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -35,39 +35,35 @@ bool NetworkManager::AddListener(int port)
 	// Listeners don't need to use pooling
 	std::shared_ptr<ListenClient> listenClient = std::make_shared<ListenClient>();
 
+	// Initialize Listen Socket
 	if (false == listenClient->Init())
 	{
 		return false;
 	}
 
-	if (false == listenClient->BindAndListen(port, mIOCPHandler.GetIOCPHandle()))
+	// Listen for Incoming Connections
+	if (false == listenClient->BindAndListen(port))
 	{
 		return false;
 	}
-
-	if (false == _AddClient(std::move(listenClient)))
+	
+	// Register Listener
+	if (false == mIOCPHandler->Register(listenClient))
 	{
+		printf("Register Client Error\n");
 		return false;
 	}
 
-	// Client to use for accepting
-	auto pClient = StaticPool<NetworkClient>::GetInstance().Pop();
+	// Post Accept
+	listenClient->PostAccept();
 
-	if (false == listenClient->Accept(pClient))
-	{
-		return false;
-	}
-
-	if (false == _AddClient(std::move(pClient)))
-	{
-		return false;
-	}
+	// Add Listener to List
+	mListenClientList[0] = std::move(listenClient);
 
 	return true;
 }
 
-
-bool NetworkManager::_AddClient(std::shared_ptr<NetworkClient> client)
+bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 {
 	if (nullptr == client)
 	{
@@ -75,26 +71,26 @@ bool NetworkManager::_AddClient(std::shared_ptr<NetworkClient> client)
 	}
 
 	// Register Client
-	if (false == mIOCPHandler.Register(client))
+	if (false == mIOCPHandler->Register(client))
 	{
 		printf("Register Client Error\n");
 		return false;
 	}
 
+	// For real world scenario, should use a session manager to assign session id
 	client->SetSessionID(static_cast<UINT32>(mClientList.size()));
-
-	mClientList.emplace_back(std::move(client));
+	mClientList.push_back(std::move(client));
 
 	return true;
 }
 
-std::weak_ptr<NetworkClient> NetworkManager::_GetClient(UINT32 index)
+std::weak_ptr<NetworkClient> NetworkManager::GetClient(UINT32 index)
 {
 	if (index >= mClientList.size())
 	{
 		return std::weak_ptr<NetworkClient>();
 	}
 
-	return mClientList[index]->GetWeakPtr();
+	// at() is concurrency-safe for read operations, and also while growing the vector, as long as you have ensured that the value _Index is less than the size of the concurrent vector.
+	return mClientList.at(index)->GetWeakPtr();
 }
-

@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
+#include "NetworkContext.h"
 #include "NetworkClient.h"
-#include <array>
+
 
 class NetworkClient;
 class ListenClient : public NetworkClient
@@ -12,10 +13,10 @@ public:
 	virtual bool Init() override;
 	virtual void Reset() override;
 
-	bool BindAndListen(int port, HANDLE iocpHandle);
-	bool Accept();
+	bool BindAndListen(int port);
+	bool PostAccept();
 
-	void Clear();
+	NetworkContext GetContext() { return mContext; };
 private:
 	NetworkContext mContext;
 };

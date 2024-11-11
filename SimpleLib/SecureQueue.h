@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <concurrent_queue.h>
 
 template<typename T>

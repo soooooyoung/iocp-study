@@ -1,21 +1,20 @@
+ï»¿#include "SimpleCore.h"
 #include "NetworkClient.h"
 #include "NetworkContext.h"
 
 
-NetworkClient::NetworkClient()
-{
-}
-
 bool NetworkClient::Init()
 {
 	Reset();
+
+	return true;
 }
 
-void NetworkClient::Close(bool bIsForce = false)
+void NetworkClient::Close(bool bIsForce)
 {
 	struct linger stLinger = { 0,0 }; 
 
-	// bIsForce°¡ trueÀÌ¸é SO_LINGER, timeout = 0À¸·Î ¼³Á¤ÇÏ¿© °­Á¦ Á¾·á
+	// bIsForceê°€ trueì´ë©´ SO_LINGER, timeout = 0ìœ¼ë¡œ ì„¤ì •í•˜ì—¬ ê°•ì œ ì¢…ë£Œ
 	if (true == bIsForce)
 	{
 		stLinger.l_onoff = 1;

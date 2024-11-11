@@ -1,11 +1,13 @@
-#pragma once
-#include "SecureQueue.h"
-#include "PoolObject.h"
+﻿#pragma once
 #include <memory>
+#include <type_traits>
+#include "SecureQueue.h"
 
 template<typename T>
-class StaticPool {
+class StaticPool
+{
 private:
+	StaticPool() = default;
 	SecureQueue<std::shared_ptr<T>> mPool;
 
 	void Release(std::shared_ptr<T> object) {
@@ -13,7 +15,7 @@ private:
 			return;
 
 		object->Release();
-		mPool.Push(object);
+		mPool.Push(std::move(object));
 	}
 
 	struct Deleter {
@@ -22,12 +24,11 @@ private:
 				return;
 
 			std::shared_ptr<T> ptr{ object, [](T*) {} };
-			StaticPool<T>::GetInstance()->Release(ptr);
+			StaticPool<T>::GetInstance().Release(ptr);
 		}
 	};
 
 public:
-
 	static StaticPool<T>& GetInstance() {
 		static StaticPool<T> instance;
 		return instance;
@@ -47,9 +48,8 @@ public:
 		if (mPool.IsEmpty()) {
 			return std::shared_ptr<T>(new T(), Deleter());
 		}
-		else {
-			return mPool.Pop();
-		}
+
+		return mPool.Pop();
 	}
 
 	void Clear() {
@@ -63,3 +63,26 @@ public:
 		}
 	}
 };
+
+
+template<typename T>
+class PoolObject : public std::enable_shared_from_this<T>
+{
+public:
+	virtual ~PoolObject() {};
+	virtual void Release() {};
+
+	std::shared_ptr<T> GetSharedPtr() {
+		return this->shared_from_this();
+	}
+
+	std::weak_ptr<T> GetWeakPtr() {
+		return this->shared_from_this();
+	}
+
+
+protected:
+	friend class StaticPool<T>;
+};
+
+

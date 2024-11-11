@@ -1,6 +1,5 @@
-#include "ListenClient.h"
-#include "NetworkContext.h"
-#include "StaticPool.h"
+﻿#include "ListenClient.h"
+#include "SimpleCore.h"
 
 bool ListenClient::Init()
 {
@@ -23,10 +22,10 @@ bool ListenClient::Init()
 void ListenClient::Reset()
 {
 	NetworkClient::Reset();
-	Clear();
+	mContext.Clear();
 }
 
-bool ListenClient::BindAndListen(int port, HANDLE iocpHandle)
+bool ListenClient::BindAndListen(int port)
 {
 	SOCKADDR_IN serverAddr;
 	serverAddr.sin_family = AF_INET;
@@ -52,22 +51,18 @@ bool ListenClient::BindAndListen(int port, HANDLE iocpHandle)
 	return true;
 }
 
-void ListenClient::Clear()
-{
-	mContext.Clear();
-}
 
-bool ListenClient::Accept()
+bool ListenClient::PostAccept()
 {
 	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
 	if (INVALID_SOCKET == clientSocket)
 	{
-		printf("WSASocket() Error on ListenClient: %d\n", WSAGetLastError());
+		printf("PostAccept() Error on ListenClient: %d\n", WSAGetLastError());
 		return false;
 	}
 
-	mContext.Clear();
+		mContext.Clear();
 	mContext.mContextType = ContextType::ACCEPT;
 
 	DWORD dwRecvNumBytes = 0;

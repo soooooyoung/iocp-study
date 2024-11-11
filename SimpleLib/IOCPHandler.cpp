@@ -1,6 +1,7 @@
 #include "IOCPHandler.h"
 #include "NetworkContext.h"
 #include "NetworkClient.h"
+#include "SimpleCore.h"
 
 bool IOCPHandler::Init()
 {

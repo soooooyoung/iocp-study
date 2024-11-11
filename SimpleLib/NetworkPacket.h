@@ -1,11 +1,5 @@
-#pragma once
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <cstdint>
-#include <array>
-#include <span>
-#include <WinSock2.h>
+﻿#pragma once
+#include "SimpleCore.h"
 
 #pragma pack(push, 1)
 struct NetworkPacket 
@@ -17,7 +11,7 @@ struct NetworkPacket
     };
 
     PacketHeader Header{};
-	std::vector<BYTE> Body;
+	std::vector<std::uint8_t> Body;
 
     std::size_t GetPacketSize() const
     {
