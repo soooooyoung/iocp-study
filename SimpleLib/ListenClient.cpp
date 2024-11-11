@@ -2,6 +2,30 @@
 #include "NetworkContext.h"
 #include "StaticPool.h"
 
+bool ListenClient::Init()
+{
+	Reset();
+
+	mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+	if (INVALID_SOCKET == mSocket)
+	{
+		printf("WSASocket() Error on ListenClient: %d\n", WSAGetLastError());
+		return false;
+	}
+
+	// TODO: move hardcoded variables to server config later
+	mContext.ResizeBuffer(64);
+
+	return true;
+}
+
+void ListenClient::Reset()
+{
+	NetworkClient::Reset();
+	Clear();
+}
+
 bool ListenClient::BindAndListen(int port, HANDLE iocpHandle)
 {
 	SOCKADDR_IN serverAddr;
@@ -28,40 +52,50 @@ bool ListenClient::BindAndListen(int port, HANDLE iocpHandle)
 	return true;
 }
 
-bool ListenClient::Accept(std::weak_ptr<NetworkClient> weakClient)
+void ListenClient::Clear()
 {
-	auto pClient = weakClient.lock();
+	mContext.Clear();
+}
 
-	if (nullptr == mContext||
-		nullptr == pClient)
+bool ListenClient::Accept()
+{
+	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+	if (INVALID_SOCKET == clientSocket)
 	{
+		printf("WSASocket() Error on ListenClient: %d\n", WSAGetLastError());
 		return false;
 	}
 
-	pClient->Init();
-
-	mContext->Clear();
-	mContext->mContextType = ContextType::ACCEPT;
-	mContext->mSessionID = pClient->GetSessionID();
+	mContext.Clear();
+	mContext.mContextType = ContextType::ACCEPT;
 
 	DWORD dwRecvNumBytes = 0;
 	DWORD dwFlag = 0;
 
 	// AcceptEx: stays in a waiting state until a client attempts to connect 
 	if (FALSE == AcceptEx(mSocket, 
-		pClient->GetSocket(), 
-		mAcceptBuffer.data(), 
+		clientSocket,
+		mContext.GetWriteBuffer(),
 		0, 
 		sizeof(SOCKADDR_IN) + 16, 
 		sizeof(SOCKADDR_IN) + 16, 
-		&dwRecvNumBytes, 
-		(LPOVERLAPPED)mContext.get()))
+		&dwRecvNumBytes,
+		(LPOVERLAPPED)&mContext))
 	{
 		if (WSAGetLastError() != ERROR_IO_PENDING)
 		{
 			printf_s("AcceptEx Error : %d\n", WSAGetLastError());
 			return false;
 		}
+
+		int localAddrLen = 0;
+		int remoteAddrLen = 0;
+
+		GetAcceptExSockaddrs(mContext.GetWriteBuffer(), 0,
+			sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16,
+			(SOCKADDR**)&mContext.mLocalAddr, &localAddrLen,
+			(SOCKADDR**)&mContext.mRemoteAddr, &remoteAddrLen);
 	}
 
 	return true;

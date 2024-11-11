@@ -9,8 +9,13 @@ public:
 	ListenClient() {};
 	virtual ~ListenClient() {};
 
+	virtual bool Init() override;
+	virtual void Reset() override;
+
 	bool BindAndListen(int port, HANDLE iocpHandle);
-	bool Accept(std::weak_ptr<NetworkClient> client);
+	bool Accept();
+
+	void Clear();
 private:
-	std::array<BYTE, 64> mAcceptBuffer = { 0, };
+	NetworkContext mContext;
 };
