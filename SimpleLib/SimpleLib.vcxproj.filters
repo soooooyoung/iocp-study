@@ -23,6 +23,10 @@
     <ClInclude Include="ListenClient.h">
       <Filter>Network\Client</Filter>
     </ClInclude>
+    <ClInclude Include="ServerApp.h" />
+    <ClInclude Include="PoolObject.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IOCPHandler.cpp" />

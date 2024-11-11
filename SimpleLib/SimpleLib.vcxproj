@@ -25,7 +25,9 @@
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkPacket.h" />
+    <ClInclude Include="PoolObject.h" />
     <ClInclude Include="SecureQueue.h" />
+    <ClInclude Include="ServerApp.h" />
     <ClInclude Include="StaticPool.h" />
   </ItemGroup>
   <ItemGroup>
