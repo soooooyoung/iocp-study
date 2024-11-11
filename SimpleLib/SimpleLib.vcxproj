@@ -20,13 +20,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOCPHandler.h" />
+    <ClInclude Include="ListenClient.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkContext.h" />
+    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkPacket.h" />
+    <ClInclude Include="SecureQueue.h" />
+    <ClInclude Include="StaticPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IOCPHandler.cpp" />
+    <ClCompile Include="ListenClient.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
+    <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

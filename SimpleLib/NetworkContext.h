@@ -6,14 +6,22 @@
 
 enum class ContextType
 {
+	NONE,
 	ACCEPT,
 	RECV,
 	SEND
 };
 
-
 struct NetworkContext
 {
 	WSAOVERLAPPED mWsaOverlapped;
 	ContextType mContextType;
+	UINT32 mSessionID;
+
+	void Clear()
+	{
+		ZeroMemory(&mWsaOverlapped, sizeof(WSAOVERLAPPED));
+		mContextType = ContextType::NONE;
+		mSessionID = 0;
+	}
 };

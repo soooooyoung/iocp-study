@@ -17,7 +17,7 @@ struct NetworkPacket
     };
 
     PacketHeader Header{};
-    std::array<std::uint8_t, 1024 * 8> Body{};
+	std::vector<BYTE> Body;
 
     std::size_t GetPacketSize() const
     {

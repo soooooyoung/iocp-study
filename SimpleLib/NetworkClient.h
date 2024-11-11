@@ -1,22 +1,30 @@
 #pragma once
-#include <winsock2.h>
+#include <Winsock2.h>
 #include <mutex>
-#include <queue>
+#include "SecureQueue.h"
+#include "StaticPool.h"
 
 struct NetworkContext;
-class NetworkClient
+class NetworkClient : public PoolObject<NetworkClient>
 {
 public:
-	NetworkClient();
 	virtual ~NetworkClient();
 
-	void Init(const UINT32 sessionID);
+	UINT32 GetSessionID() const { return mSessionID; }
+	SOCKET GetSocket() const { return mSocket; }
+	UINT64 GetLatestClosedTimeSec() { return mLatestClosedTimeSec; }
 
+	void SetSessionID(UINT32 sessionID) { mSessionID = sessionID; }
 
-private:
+	bool Init();
+	void Close(bool bIsForce = false);
+	void Reset();
+protected:
 	UINT32 mSessionID = 0;
 	SOCKET mSocket = INVALID_SOCKET;
+	UINT64 mLatestClosedTimeSec = 0;
 
-	std::mutex mSendLock;
-	std::queue<NetworkContext*> mSendQueue;
+	std::shared_ptr<NetworkContext> mContext;
+	SecureQueue<std::shared_ptr<NetworkContext>> mSendQueue;
 };
+
