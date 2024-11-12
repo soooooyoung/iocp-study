@@ -17,11 +17,13 @@ public:
 	virtual void Reset();
 
 	void Close(bool bIsForce = false);
+
+	void PushSend(std::uint8_t* pData, size_t size);
 protected:
 	UINT32 mSessionID = 0;
 	SOCKET mSocket = INVALID_SOCKET;
 	UINT64 mLatestClosedTimeSec = 0;
 
-	SecureQueue<std::shared_ptr<NetworkContext>> mSendQueue;
+	SecureQueue<NetworkContext*> mSendQueue;
 };
 

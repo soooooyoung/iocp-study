@@ -6,7 +6,8 @@ const UINT64 MAX_LISTEN_COUNT = 1;
 class NetworkClient;
 class ListenClient;
 class IOCPHandler;
-class NetworkManager
+
+class NetworkManager : public Singleton<NetworkManager>
 {
 public:
 	NetworkManager() {}
@@ -17,9 +18,11 @@ public:
 	bool AddClient(std::shared_ptr<NetworkClient> client);
 	bool AddListener(int port);
 
-	std::weak_ptr<NetworkClient> GetClient(UINT32 index);
+	bool SendPacket(UINT32 clientIndex, std::uint8_t* pData, size_t size);
+
+	std::weak_ptr<NetworkClient> GetClient(UINT32 clientIndex);
 private:
-	IOCPHandler* mIOCPHandler;
+	std::unique_ptr<IOCPHandler> mIOCPHandler;
 	std::array<std::shared_ptr<ListenClient>, MAX_LISTEN_COUNT> mListenClientList;
 
 	// Connected Clients, Uses Index as SessionID

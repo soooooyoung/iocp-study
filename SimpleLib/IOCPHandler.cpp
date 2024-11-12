@@ -2,6 +2,8 @@
 #include "NetworkContext.h"
 #include "NetworkClient.h"
 #include "SimpleCore.h"
+#include "ListenClient.h"
+#include "NetworkManager.h"
 
 bool IOCPHandler::Init()
 {
@@ -108,4 +110,44 @@ void IOCPHandler::WorkerThread()
 		}
 
 	}
+}
+
+void IOCPHandler::_HandleAccept(NetworkClient* host, NetworkContext& context)
+{
+	if (INVALID_SOCKET == context.mSocket)
+	{
+		printf("_HandleAccept ERROR: Invalid Socket\n");
+		return;
+	}
+
+	// Get New Client
+	auto client = StaticPool<NetworkClient>::GetInstance().Pop();
+	client->SetSocket(context.mSocket);
+
+	// Register Client
+	if (false == NetworkManager::GetInstance().AddClient(client))
+	{
+		printf("_HandleAccept ERROR: RegisterClient\n");
+		return;
+	}
+
+	// Post Accept Again
+	ListenClient* listenClient = static_cast<ListenClient*>(host);
+
+	if (nullptr == listenClient)
+	{
+		printf("_HandleAccept ERROR: Invalid ListenClient\n");
+		return;
+	}
+
+	listenClient->PostAccept();
+	return;
+}
+
+void IOCPHandler::_HandleReceive(UINT32 sessionID, NetworkContext& context)
+{
+}
+
+void IOCPHandler::_HandleSend(UINT32 sessionID)
+{
 }

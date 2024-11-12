@@ -20,8 +20,10 @@ public:
 	WSAOVERLAPPED mWsaOverlapped = { 0, };
 	ContextType mContextType = ContextType::NONE;
 	UINT32 mSessionID = 0;
+
 	SOCKADDR* mLocalAddr = nullptr;
 	SOCKADDR* mRemoteAddr = nullptr;
+	SOCKET mSocket = INVALID_SOCKET;
 
 public:
 	NetworkContext();

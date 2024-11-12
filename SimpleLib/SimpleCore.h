@@ -17,7 +17,10 @@
 #include <span>
 #include <vector>
 #include <string>
+#include <functional>
 
 // SimpleLib
 #include "SecureQueue.h"
 #include "StaticPool.h"
+#include "Singleton.h"
+#include "NetworkPacket.h"

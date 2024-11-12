@@ -25,6 +25,9 @@
     </ClInclude>
     <ClInclude Include="ServerApp.h" />
     <ClInclude Include="SimpleCore.h" />
+    <ClInclude Include="Singleton.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IOCPHandler.cpp" />

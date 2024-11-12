@@ -62,8 +62,10 @@ bool ListenClient::PostAccept()
 		return false;
 	}
 
-		mContext.Clear();
+	mContext.Clear();
 	mContext.mContextType = ContextType::ACCEPT;
+	// Add Client Socket information to Context
+	mContext.mSocket = clientSocket;
 
 	DWORD dwRecvNumBytes = 0;
 	DWORD dwFlag = 0;

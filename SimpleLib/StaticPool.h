@@ -10,14 +10,6 @@ private:
 	StaticPool() = default;
 	SecureQueue<std::shared_ptr<T>> mPool;
 
-	void Release(std::shared_ptr<T> object) {
-		if (nullptr == object)
-			return;
-
-		object->Release();
-		mPool.Push(std::move(object));
-	}
-
 	struct Deleter {
 		void operator()(T* object) {
 			if (nullptr == object)
@@ -32,6 +24,14 @@ public:
 	static StaticPool<T>& GetInstance() {
 		static StaticPool<T> instance;
 		return instance;
+	}
+
+	void Release(std::shared_ptr<T> object) {
+		if (nullptr == object)
+			return;
+
+		object->Release();
+		mPool.Push(std::move(object));
 	}
 
 	virtual ~StaticPool() {

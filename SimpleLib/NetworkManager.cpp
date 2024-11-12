@@ -12,12 +12,22 @@ bool NetworkManager::Init()
 	StaticPool<NetworkContext>::GetInstance().Reserve(100);
 	mClientList.reserve(11);
 
-	mIOCPHandler = new IOCPHandler();
+	// Lambda for Pushing Packets to Clients
+	auto pushSendPacket = [&](UINT32 clientIndex, std::uint8_t* pData, size_t size)
+	{
+		SendPacket(clientIndex, pData, size);
+	};
+
+	mIOCPHandler = std::make_unique<IOCPHandler>();
+	mIOCPHandler->PushSendPacket = pushSendPacket;
+
+	// Initialize Winsock and Create IOCP Handle, Start Worker Threads
 	if (false == mIOCPHandler->Init())
 	{
 		return false;
 	}
 
+	// Listeners for Incoming Connections
 	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
 	{
 		// FIXME: hardcoded port
@@ -58,7 +68,21 @@ bool NetworkManager::AddListener(int port)
 	listenClient->PostAccept();
 
 	// Add Listener to List
+	listenClient->SetSessionID(static_cast<UINT32>(mListenClientList.size()));
 	mListenClientList[0] = std::move(listenClient);
+
+	return true;
+}
+
+bool NetworkManager::SendPacket(UINT32 clientIndex, std::uint8_t* pData, size_t size)
+{
+	auto pClient = GetClient(clientIndex).lock();
+	if (nullptr == pClient)
+	{
+		return false;
+	}
+
+	pClient->PushSend(pData, size);
 
 	return true;
 }
@@ -94,3 +118,4 @@ std::weak_ptr<NetworkClient> NetworkManager::GetClient(UINT32 index)
 	// at() is concurrency-safe for read operations, and also while growing the vector, as long as you have ensured that the value _Index is less than the size of the concurrent vector.
 	return mClientList.at(index)->GetWeakPtr();
 }
+

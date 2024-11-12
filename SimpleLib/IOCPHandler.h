@@ -1,9 +1,7 @@
 #pragma once
-#include <vector>
 #include <WinSock2.h>
-#include <thread>
-#include <memory>
 
+class NetworkContext;
 class NetworkClient;
 class IOCPHandler 
 {
@@ -16,6 +14,7 @@ public:
 	bool Init();
 	bool Register(std::shared_ptr<NetworkClient> client);
 
+	std::function<void(UINT32, std::uint8_t*, size_t)> PushSendPacket;
 private:
 	void WorkerThread();
 
@@ -23,7 +22,8 @@ private:
 	HANDLE mIOCPHandle = INVALID_HANDLE_VALUE;
 	std::vector<std::thread> mIOThreadList;
 
-	void _HandleAccept();
-	void _HandleReceive();
-	void _HandleSend();
+
+	void _HandleAccept(NetworkClient* host, NetworkContext& context);
+	void _HandleReceive(UINT32 sessionID, NetworkContext& context);
+	void _HandleSend(UINT32 sessionID);
 };

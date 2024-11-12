@@ -28,6 +28,13 @@ void NetworkClient::Close(bool bIsForce)
 	mSocket = INVALID_SOCKET;
 }
 
+void NetworkClient::PushSend(std::uint8_t* pData, size_t size)
+{
+
+
+
+}
+
 void NetworkClient::Reset()
 {
 	mSocket = INVALID_SOCKET;
