@@ -6,13 +6,6 @@ These branches follow steps [IOCP Tutorial Repo](https://github.com/jacking75/ed
 
 [단계 별로 IOCP 실습](https://github.com/jacking75/edu_cpp_IOCP.git) 진행 과정을 기록합니다.
 
-- [Step 1-2](https://github.com/soooooyoung/iocp-study/tree/IOCP_01_02)
-- [Step 3](https://github.com/soooooyoung/iocp-study/tree/IOCP_03)
-- [Step 4](https://github.com/soooooyoung/iocp-study/tree/IOCP_04)
-- [Step 5](https://github.com/soooooyoung/iocp-study/tree/IOCP_05)
-- [Step 6](https://github.com/soooooyoung/iocp-study/tree/IOCP_06)
-- [Step 7](https://github.com/soooooyoung/iocp-study/tree/IOCP_07)
-
 | Step                                                                  | Description                                            |
 | :-------------------------------------------------------------------- | :----------------------------------------------------- |
 | [Step 1-2](https://github.com/soooooyoung/iocp-study/tree/IOCP_01_02) | Create Echoserver utilizing IOCP                       |
