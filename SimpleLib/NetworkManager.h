@@ -16,7 +16,7 @@ public:
 	bool Init();
 
 	bool AddClient(std::shared_ptr<NetworkClient> client);
-	bool AddListener(int port);
+	bool AddListener(int index, int port);
 
 	bool SendPacket(UINT32 clientIndex, std::uint8_t* pData, size_t size);
 

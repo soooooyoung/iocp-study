@@ -125,7 +125,7 @@ void IOCPHandler::_HandleAccept(NetworkClient* host, NetworkContext& context)
 	client->SetSocket(context.mSocket);
 
 	// Register Client
-	if (false == NetworkManager::GetInstance().AddClient(client))
+	if (false == NetworkManager::GetInstance().AddClient(std::move(client)))
 	{
 		printf("_HandleAccept ERROR: RegisterClient\n");
 		return;

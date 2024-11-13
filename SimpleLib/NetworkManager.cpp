@@ -31,7 +31,7 @@ bool NetworkManager::Init()
 	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
 	{
 		// FIXME: hardcoded port
-		if (false == AddListener(9000 + i))
+		if (false == AddListener(i, 9000 + i))
 		{
 			return false;
 		}
@@ -40,7 +40,7 @@ bool NetworkManager::Init()
 	return true;
 }
 
-bool NetworkManager::AddListener(int port)
+bool NetworkManager::AddListener(int index, int port)
 {
 	// Listeners don't need to use pooling
 	std::shared_ptr<ListenClient> listenClient = std::make_shared<ListenClient>();
@@ -68,8 +68,8 @@ bool NetworkManager::AddListener(int port)
 	listenClient->PostAccept();
 
 	// Add Listener to List
-	listenClient->SetSessionID(static_cast<UINT32>(mListenClientList.size()));
-	mListenClientList[0] = std::move(listenClient);
+	listenClient->SetSessionID(index);
+	mListenClientList[index] = std::move(listenClient);
 
 	return true;
 }
