@@ -1,10 +1,11 @@
 # IOCP Study
 
+[![en](https://img.shields.io/badge/lang-en-yellow.svg)](README.md)
+[![kr](https://img.shields.io/badge/lang-kr-red.svg)](README.kr.md)
+
 ## Tutorial Branches
 
 These branches follow steps [IOCP Tutorial Repo](https://github.com/jacking75/edu_cpp_IOCP.git) by [jacking75](https://github.com/jacking75) for learning purposes
-
-[단계 별로 IOCP 실습](https://github.com/jacking75/edu_cpp_IOCP.git) 진행 과정을 기록합니다.
 
 | Step                                                                  | Description                                            |
 | :-------------------------------------------------------------------- | :----------------------------------------------------- |
@@ -41,17 +42,6 @@ This approach will outline:
 | NetworkManager | Coordinates overall network operations, manages client and listener registration, sends packets, and interacts with IOCPHandler.     |
 | SimpleCore     | Provides foundational includes and utility classes used throughout the network library, such as memory pools and singleton patterns. |
 | NetworkContext | Represents the context of each I/O operation, maintaining buffer and connection details.                                             |
-
-\*Inherits **NetworkClient**
-
-| 구성 요소      | 역할                                                                                                                    |
-| :------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| IOCPHandler    | I/O 완료 포트(IOCP) 작업을 관리하며, I/O 이벤트를 처리하기 위한 작업자 스레드와 클라이언트 IOCP 핸들 등록을 포함합니다. |
-| NetworkClient  | 클라이언트의 연결을 수신 대기하며, 포트에 바인딩하고 연결 수락을 비동기적으로 처리합니다.                               |
-| \*ListenClient | 클라이언트 연결 세션을 나타내며, 세션 ID와 소켓을 유지하고 송신 작업을 처리합니다.                                      |
-| NetworkManager | 전체 네트워크 작업 (클라이언트 등록 및 패킷 전송 등) 을 조율하며 IOCPHandler와 상호 작용합니다.                         |
-| SimpleCore     | 메모리 풀과 싱글톤 패턴과 같은 네트워크 라이브러리 전반에서 사용되는 기본 포함 파일 및 유틸리티 클래스를 제공합니다.    |
-| NetworkContext | 각 I/O 작업의 컨텍스트를 나타내며, 버퍼와 연결 세부 정보를 유지 관리합니다.                                             |
 
 \*Inherits **NetworkClient**
 
