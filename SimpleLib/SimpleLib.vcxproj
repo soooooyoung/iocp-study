@@ -28,7 +28,6 @@
     <ClInclude Include="SecureQueue.h" />
     <ClInclude Include="ServerApp.h" />
     <ClInclude Include="SimpleCore.h" />
-    <ClInclude Include="Singleton.h" />
     <ClInclude Include="StaticPool.h" />
   </ItemGroup>
   <ItemGroup>
