@@ -98,5 +98,19 @@ bool ListenClient::PostAccept()
 	return true;
 }
 
+bool ListenClient::OnAccept(SOCKET& clientSocket)
+{
+	//	SO_UPDATE_ACCEPT_CONTEXT
+	//	This association enables functions like
+	//	getpeername, getsockname, getsockopt, and setsockopt 
+	//	to operate correctly on the accepted socket.
+	if (SOCKET_ERROR == setsockopt(clientSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&mSocket, sizeof(SOCKET)))
+	{
+		return false;
+	}
+
+	return true;
+}
+
 
 

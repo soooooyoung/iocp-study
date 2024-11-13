@@ -15,6 +15,7 @@ public:
 
 	bool BindAndListen(int port);
 	bool PostAccept();
+	bool OnAccept(SOCKET& clientSocket);
 
 	NetworkContext GetContext() { return mContext; };
 private:

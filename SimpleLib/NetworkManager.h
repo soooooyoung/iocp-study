@@ -7,7 +7,7 @@ class NetworkClient;
 class ListenClient;
 class IOCPHandler;
 
-class NetworkManager : public Singleton<NetworkManager>
+class NetworkManager
 {
 public:
 	NetworkManager() {}
@@ -27,4 +27,5 @@ private:
 
 	// Connected Clients, Uses Index as SessionID
 	concurrency::concurrent_vector<std::shared_ptr<NetworkClient>> mClientList;
+
 };

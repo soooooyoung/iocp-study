@@ -11,12 +11,12 @@ public:
 	UINT64 GetLatestClosedTimeSec() { return mLatestClosedTimeSec; }
 
 	void SetSessionID(UINT32 sessionID) { mSessionID = sessionID; }
-	void SetSocket(SOCKET socket) { mSocket = socket; }
 
 	virtual bool Init();
 	virtual void Reset();
 
 	void Close(bool bIsForce = false);
+	void OnConnect(SOCKET& socket);
 
 	void PushSend(std::uint8_t* pData, size_t size);
 protected:

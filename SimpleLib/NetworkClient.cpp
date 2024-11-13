@@ -28,6 +28,16 @@ void NetworkClient::Close(bool bIsForce)
 	mSocket = INVALID_SOCKET;
 }
 
+void NetworkClient::OnConnect(SOCKET& socket)
+{
+	// TCP sockets utilize Nagle's algorithm by default
+	// This algorithm is designed to reduce the number of small packets sent over the network
+	// This is great for reducing network traffic, but not so great for real-time games
+	// To disable Nagle's algorithm, use the TCP_NODELAY option
+	int flag = 1;
+	setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
+}
+
 void NetworkClient::PushSend(std::uint8_t* pData, size_t size)
 {
 

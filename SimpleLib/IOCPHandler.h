@@ -1,5 +1,6 @@
 #pragma once
 #include <WinSock2.h>
+#include <memory>
 
 class NetworkContext;
 class NetworkClient;
@@ -12,9 +13,13 @@ public:
 	HANDLE GetIOCPHandle() const { return mIOCPHandle; }
 
 	bool Init();
+
+
 	bool Register(std::shared_ptr<NetworkClient> client);
 
 	std::function<void(UINT32, std::uint8_t*, size_t)> PushSendPacket;
+	std::function<bool(std::shared_ptr<NetworkClient>)> AddClient;
+
 private:
 	void WorkerThread();
 

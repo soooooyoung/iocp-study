@@ -87,7 +87,7 @@ void IOCPHandler::WorkerThread()
 		{
 		case ContextType::ACCEPT:
 		{
-
+			_HandleAccept(pClient, *context);
 		}
 		break;
 		case ContextType::RECV:
@@ -120,18 +120,6 @@ void IOCPHandler::_HandleAccept(NetworkClient* host, NetworkContext& context)
 		return;
 	}
 
-	// Get New Client
-	auto client = StaticPool<NetworkClient>::GetInstance().Pop();
-	client->SetSocket(context.mSocket);
-
-	// Register Client
-	if (false == NetworkManager::GetInstance().AddClient(std::move(client)))
-	{
-		printf("_HandleAccept ERROR: RegisterClient\n");
-		return;
-	}
-
-	// Post Accept Again
 	ListenClient* listenClient = static_cast<ListenClient*>(host);
 
 	if (nullptr == listenClient)
@@ -139,6 +127,34 @@ void IOCPHandler::_HandleAccept(NetworkClient* host, NetworkContext& context)
 		printf("_HandleAccept ERROR: Invalid ListenClient\n");
 		return;
 	}
+
+	// Associate Client Socket to Listener 
+	if (false == listenClient->OnAccept(context.mSocket))
+	{
+		printf("_HandleAccept ERROR: OnAccept\n");
+		return;
+	}
+
+	// Get New Client
+	auto client = StaticPool<NetworkClient>::GetInstance().Pop();
+	client->OnConnect(context.mSocket);
+
+	// Register Client
+	if (false == Register(client))
+	{
+		printf("_HandleAccept ERROR: RegisterClient\n");
+		return;
+	}
+
+	// Add Client to Session List
+	if (false == AddClient(std::move(client)))
+	{
+		printf("_HandleAccept ERROR: RegisterClient\n");
+		return;
+	}
+
+	// Post Accept Again
+
 
 	listenClient->PostAccept();
 	return;

@@ -18,8 +18,14 @@ bool NetworkManager::Init()
 		SendPacket(clientIndex, pData, size);
 	};
 
+	auto addClient = [&](std::shared_ptr<NetworkClient> client)
+	{
+		return AddClient(client);
+	};
+
 	mIOCPHandler = std::make_unique<IOCPHandler>();
 	mIOCPHandler->PushSendPacket = pushSendPacket;
+	mIOCPHandler->AddClient = addClient;
 
 	// Initialize Winsock and Create IOCP Handle, Start Worker Threads
 	if (false == mIOCPHandler->Init())
@@ -91,13 +97,6 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 {
 	if (nullptr == client)
 	{
-		return false;
-	}
-
-	// Register Client
-	if (false == mIOCPHandler->Register(client))
-	{
-		printf("Register Client Error\n");
 		return false;
 	}
 
