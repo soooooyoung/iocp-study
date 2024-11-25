@@ -78,7 +78,9 @@ public:
 		printf_s("PostAccept : SessionIndex(%d)\n", mIndex);
 
 		mLatestClosedTimeSec = UINT32_MAX;
-		mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+		mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP,
+			NULL, 0, WSA_FLAG_OVERLAPPED);
 
 		if (INVALID_SOCKET == mSocket)
 		{
@@ -163,6 +165,8 @@ public:
 			printf("WSARecv Error : %d\n", WSAGetLastError());
 			return false;
 		}
+
+		return true;
 	}
 
 

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <concurrent_queue.h>
 
 template<typename T>
@@ -21,10 +21,10 @@ public:
         return object;
     }
 
-	void Clear() {
-		while (!mObjects.empty()) {
-			T object;
-			mObjects.try_pop(object);
-		}
-	}
+    void Clear() {
+        while (!mObjects.empty()) {
+            T object;
+            mObjects.try_pop(object);
+        }
+    }
 };

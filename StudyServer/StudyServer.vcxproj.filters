@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkClient.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ListenClient.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Network">
+      <UniqueIdentifier>{7c068413-314b-464e-98eb-da81e2537803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ServerCore">
+      <UniqueIdentifier>{be21f865-6865-45e0-8c78-df513b93eab7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{04e362c9-9661-47e9-866e-3145494f0d6c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Define.h">
+      <Filter>ServerCore</Filter>
+    </ClInclude>
+    <ClInclude Include="SecureQueue.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkClient.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkContext.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ListenClient.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
