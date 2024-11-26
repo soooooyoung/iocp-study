@@ -46,3 +46,49 @@ This approach will outline:
 \*Inherits **NetworkClient**
 
 #### Server Logic
+
+### Implementations
+
+#### Using OVERLAPPED with IOCP and Custom Context
+
+Primary challenge was ensuring the compatibility of custom NetworkContext objects with the Windows I/O Completion Port (IOCP) mechanisms while maintaining application-specific data.
+
+#### Initial Implementation:
+
+In the initial design, the NetworkContext class contained a member variable of type WSAOVERLAPPED:
+
+```cpp
+class NetworkContext
+{
+private:
+std::array<std::uint8_t, 8096> mBuffer;
+int mReadPos = 0;
+int mWritePos = 0;
+
+public:
+	WSAOVERLAPPED mWsaOverlapped = { 0, };
+//...
+}
+```
+
+This allowed the association of asynchronous I/O operations with the `WSAOVERLAPPED` structure as a member, but had limitations when additional context information was required.
+
+Directly casting the entire NetworkContext object to functions like WSASend or WSARecv could lead to issues, as these functions expect a pointer to an OVERLAPPED structure.
+
+#### Revised Implementation:
+
+To address this, the NetworkContext class was modified to inherit from OVERLAPPED:
+
+```cpp
+class NetworkContext : public OVERLAPPED
+{
+private:
+	std::array<std::uint8_t, 8096> mBuffer;
+
+	int mReadPos = 0;
+	int mWritePos = 0;
+//..
+}
+```
+
+Inheritance ensures proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.

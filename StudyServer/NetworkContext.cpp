@@ -48,6 +48,7 @@ bool NetworkContext::Write(void* data, std::size_t size)
 	if (size > GetRemainSize())
 	{
 		AlignBuffer();
+
 		if (size > GetRemainSize())
 		{
 			return false;
@@ -89,8 +90,7 @@ bool NetworkContext::Read(int size)
 {
 	if (size > GetDataSize())
 	{
-		AlignBuffer();
-		return true;
+		return false;
 	}
 
 	mReadPos += size;

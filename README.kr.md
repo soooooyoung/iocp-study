@@ -38,3 +38,42 @@
 \*Inherits **NetworkClient**
 
 #### 서버 로직
+
+### 주요 적용 사항
+
+#### IOCP에서 사용자 정의 컨텍스트 사용
+
+I/O operation 완료 시에 NetworkContext 객체와 OVERLAPPED 구조체의 호환성을 유지하면서 추가 데이터를 함께 전달 해야 했습니다.
+
+#### 초기 구현:
+
+NetworkContext 클래스에 `WSAOVERLAPPED` 타입의 멤버 변수를 포함시켰습니다
+
+```cpp
+class NetworkContext
+{
+public:
+    WSAOVERLAPPED mWsaOverlapped = { 0, };
+    //...
+};
+```
+
+이 접근 방식은 비동기 I/O 작업을 WSAOVERLAPPED 구조체와 연관시키는 것을 가능하게 했지만, 추가적인 컨텍스트 정보가 필요할 때는 한계가 있었습니다.
+
+#### 수정된 구현:
+
+이를 해결하기 위해, NetworkContext 클래스를 OVERLAPPED로부터 상속받도록 수정했습니다:
+
+```cpp
+class NetworkContext : public OVERLAPPED
+{
+private:
+    std::array<std::uint8_t, 8096> mBuffer;
+    int mReadPos = 0;
+    int mWritePos = 0;
+public:
+    //...
+};
+```
+
+이러한 상속은 메모리 정렬을 보장하여 시스템이 OVERLAPPED 필드에 직접 접근할 수 있게 합니다. 또한, 포인터 연산 없이도 나머지 컨텍스트에 접근할 수 있게 되었습니다. 그러나 이러한 상속은 NetworkContext와 OVERLAPPED 간의 의미적 관계가 없기 때문에 상속의 오용으로 간주될 수 있습니다.
