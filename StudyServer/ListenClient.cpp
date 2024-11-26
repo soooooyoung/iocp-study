@@ -58,6 +58,7 @@ bool ListenClient::PostAccept()
 		return false;
 	}
 
+	mContext->ClearOverlapped();
 	mContext->ResetBuffer();
 	mContext->mContextType = ContextType::ACCEPT;
 	mContext->mSocket = socket;
@@ -92,14 +93,6 @@ bool ListenClient::Accept(SOCKET& clientSocket)
 		return false;
 	}
 
-	int flag = 1;
-
-	if (SOCKET_ERROR == setsockopt(clientSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag)))
-	{
-		printf_s("setsockopt() Error TCP_NODELAY on ListenClient: %d\n", WSAGetLastError());
-		return false;
-	}
-
 	if (SOCKET_ERROR == setsockopt(clientSocket, 
 		SOL_SOCKET, 
 		SO_UPDATE_ACCEPT_CONTEXT, 
@@ -107,6 +100,13 @@ bool ListenClient::Accept(SOCKET& clientSocket)
 		sizeof(mSocket)))
 	{
 		printf_s("setsockopt() Error Associating Client Socket on ListenClient: %d\n", WSAGetLastError());
+		return false;
+	}
+
+	int flag = 1;
+	if (SOCKET_ERROR == setsockopt(clientSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag)))
+	{
+		printf_s("setsockopt() Error TCP_NODELAY on ListenClient: %d\n", WSAGetLastError());
 		return false;
 	}
 

@@ -10,22 +10,17 @@ void NetworkContext::ResetBuffer()
 {
 	mReadPos = 0;
 	mWritePos = 0;
-
 	mBuffer.fill(0);
 }
 
-//void NetworkContext::ResizeBuffer(size_t size)
-//{
-//	mBuffer.resize(size);
-//}
 
-void NetworkContext::Clear()
+void NetworkContext::ClearOverlapped()
 {
-	ResetBuffer();
-	ZeroMemory(&mWsaOverlapped, sizeof(WSAOVERLAPPED));
-	mContextType = ContextType::NONE;
-	//mBuffer.clear();
-	//mBuffer.shrink_to_fit();
+	Internal = 0;
+	InternalHigh = 0;
+	Offset = 0;
+	OffsetHigh = 0;
+	hEvent = 0;
 }
 
 void NetworkContext::AlignBuffer()
@@ -34,33 +29,37 @@ void NetworkContext::AlignBuffer()
 		return;
 
 	// Only align the buffer if the write position exceeds the read position.
-
 	if (mReadPos < mWritePos)
 	{
 		// Move the remaining data to the front of the buffer.
-		std::move(mBuffer.begin() + mReadPos, mBuffer.begin() + mWritePos, mBuffer.begin());
+		std::memmove(mBuffer.data(), mBuffer.data() + mReadPos, GetDataSize());
+
 		// Adjust the read and write positions.
 		mWritePos -= mReadPos;
 	}
 	else
 	{
-		mWritePos = 0;
+		ResetBuffer();
 	}
 }
 
-bool NetworkContext::Write(std::span<std::uint8_t> data)
+bool NetworkContext::Write(void* data, std::size_t size)
 {
-	if (data.size() > GetRemainSize()) {
+	if (size > GetRemainSize())
+	{
 		AlignBuffer();
-		if (data.size() > GetRemainSize()) {
+		if (size > GetRemainSize())
+		{
 			return false;
 		}
 	}
 
-	std::copy(data.begin(), data.end(), mBuffer.begin() + mWritePos);
-	mWritePos += data.size();
+	std::memcpy(mBuffer.data() + mWritePos, data, size);
+
+	mWritePos += size;
 	return true;
 }
+
 
 bool NetworkContext::Write(int size)
 {
@@ -77,12 +76,10 @@ bool NetworkContext::Read(std::span<std::uint8_t> data)
 {
 	if (data.size() > GetDataSize())
 	{
-		printf("DataSize: %d, GetDataSize: %d\n", data.size(), GetDataSize());
 		return false;
 	}
 
-	std::copy(mBuffer.begin() + mReadPos, mBuffer.begin() + mReadPos + data.size(), data.begin());
-
+	std::memcpy(data.data(), mBuffer.data() + mReadPos, data.size());
 	mReadPos += data.size();
 
 	return true;
@@ -92,7 +89,8 @@ bool NetworkContext::Read(int size)
 {
 	if (size > GetDataSize())
 	{
-		return false;
+		AlignBuffer();
+		return true;
 	}
 
 	mReadPos += size;

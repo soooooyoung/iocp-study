@@ -22,7 +22,13 @@ bool NetworkManager::Initialize()
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);
 
-	int maxThreadCount = systemInfo.dwNumberOfProcessors * 2;
+	int maxThreadCount = systemInfo.dwNumberOfProcessors;
+
+	// 60% for I/O
+	int ioThreadCount = static_cast<int>(maxThreadCount * 0.6); 
+
+	// Remainder for packet processing, leave one for main thread
+	int packetThreadCount = maxThreadCount - ioThreadCount - 1;  
 
 	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, maxThreadCount);
 
@@ -34,9 +40,14 @@ bool NetworkManager::Initialize()
 
 	mIsRunning = true;
 
-	for (int i = 0; i < maxThreadCount; ++i)
+	for (int i = 0; i < ioThreadCount; ++i)
 	{
-		mThreadPool.emplace_back([this]() { WorkerThread(); });
+		mIOThreadPool.emplace_back([this]() { WorkerThread(); });
+	}
+
+	for (int i = 0; i < packetThreadCount; ++i)
+	{
+		mPacketPool.emplace_back([this]() { SendThread(); });
 	}
 
 	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
@@ -52,10 +63,8 @@ bool NetworkManager::Initialize()
 	return true;
 }
 
-
 bool NetworkManager::AddListener(int index, int port)
 {
-	// Listeners don't need to use pooling
 	std::shared_ptr<ListenClient> listenClient = std::make_shared<ListenClient>();
 
 	// Initialize Listen Socket
@@ -109,7 +118,7 @@ void NetworkManager::Shutdown()
 		client->Close();
 	}
 
-	for (auto& thread : mThreadPool)
+	for (auto& thread : mIOThreadPool)
 	{
 		if (thread.joinable())
 		{
@@ -154,8 +163,11 @@ void NetworkManager::WorkerThread()
 			(0 == dwIoSize && ContextType::ACCEPT != context->mContextType))
 		{
 			RemoveClient(client);
+			printf_s("RemoveClient: %d\n", WSAGetLastError());
 			continue;
 		}
+
+		printf_s("ContextType: %d, IoSize: %d\n", context->mContextType, dwIoSize);
 
 		switch (context->mContextType)
 		{
@@ -175,24 +187,64 @@ void NetworkManager::WorkerThread()
 		break;
 		case ContextType::RECV:
 		{
-			_HandleRecv(*client, *context, dwIoSize);
+			_HandleReceive(*client, *context, dwIoSize);
 		}
 		break;
 		case ContextType::SEND:
 		{
-			printf_s("SEND\n");
+			_HandleSend(*client, *context, dwIoSize);
 		}
 		break;
 		default:
 		{
-
-			printf("Unknown ContextType\n");
+			printf("Unknown Context Type\n");
 		}
 		break;
 		}
 
 	}
 
+}
+
+void NetworkManager::SendThread()
+{
+	while (mIsRunning)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+		if (mSendQueue.empty())
+		{
+			continue;
+		}
+
+		std::shared_ptr<NetworkContext> context = nullptr;
+
+		if (false == mSendQueue.try_pop(context))
+		{
+			continue;
+		}
+
+		if (context->mSessionID < 0 || context->mSessionID >= mClientList.size())
+		{
+			continue;
+		}
+
+		// concurrent safe as long as index does not exceed the size
+		auto client = mClientList.at(context->mSessionID);
+
+		if (nullptr == client)
+		{
+			continue;
+		}
+
+		if (false == client->Send(*context))
+		{
+			printf_s("SendThread: Send Error\n");
+		}
+
+		// 여기서 초기화
+		context.reset();
+	}
 }
 
 void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& context)
@@ -204,14 +256,6 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 		printf_s("Accept Completion Error on ListenClient: %d\n", WSAGetLastError());
 		return;
 	}
-
-	//auto listenClient = static_cast<ListenClient*>(host);
-
-	//if (nullptr == listenClient)
-	//{
-	//	printf_s("_HandleAccept ERROR: Invalid ListenClient\n");
-	//	return;
-	//}
 
 	// Associate Client Socket to Listener 
 	if (false == listenClient.Accept(clientSocket))
@@ -239,7 +283,7 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 	}
 }
 
-void NetworkManager::_HandleRecv(NetworkClient& client, NetworkContext& context, int transferred)
+void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& context, int transferred)
 {
 	if (transferred <= 0)
 	{
@@ -253,14 +297,25 @@ void NetworkManager::_HandleRecv(NetworkClient& client, NetworkContext& context,
 		return;
 	}
 
-	printf_s("Recv Data: %s\n", context.GetReadBuffer());
+	if (false == PushSend(client.GetSessionID(), context.GetReadBuffer(), transferred))
+	{
+		printf_s("Context Read Error: PushPacket\n");
+		return;
+	}
 
-	context.ResetBuffer();
+	context.Read(transferred);
 	client.Receive();
 }
 
 void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context, int transferred)
 {
+	if (transferred <= 0)
+	{
+		printf_s("_HandleSend: Send Error: %d\n", WSAGetLastError());
+		return;
+	}
+
+	context.Read(transferred);
 }
 
 bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
@@ -288,7 +343,7 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 	client->SetSessionID(static_cast<std::int32_t>(mClientList.size()));
 	mClientList.push_back(std::move(client));
 
-	printf_s("Client Connected");
+	printf_s("Client Connected\n");
 
 	return true;
 }
@@ -320,4 +375,17 @@ void NetworkManager::RemoveClient(NetworkClient* client)
 
 	ptrClient.reset();
 	mClientList[sessionID] = nullptr;
+}
+
+bool NetworkManager::PushSend(int sessionID, void* data, int transferred)
+{
+	std::shared_ptr<NetworkContext> context = std::make_shared<NetworkContext>();
+	if (false == context->Write(data, transferred))
+	{
+		return false;
+	}
+
+	context->mContextType = ContextType::SEND;
+	context->mSessionID = sessionID;
+	mSendQueue.push(std::move(context));
 }

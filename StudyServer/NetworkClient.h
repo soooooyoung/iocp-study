@@ -1,6 +1,10 @@
 #pragma once
 #include "Define.h"
 #include <memory>
+#include <array>
+#include <mutex>
+#include <concurrent_queue.h>
+
 #include "NetworkContext.h"
 
 
@@ -16,14 +20,20 @@ public:
 	std::int32_t GetSessionID() { return mSessionID; }
 	void SetSessionID(std::int32_t sessionID) { mSessionID = sessionID; }
 
+
 	virtual bool Init();
 	virtual void Close(bool bIsForce = false);
+	virtual void Update();
 
-	bool Send(const char* data, const int size);
 	bool Receive();
+	bool Send(NetworkContext& context);
+
+	//bool PushSend(void* data, int transferred);
 
 protected:
 	std::int32_t mSessionID = 0;
 	SOCKET mSocket = INVALID_SOCKET;
-	std::shared_ptr<NetworkContext> mContext = nullptr;
+
+	std::shared_ptr<NetworkContext> mContext;
+	NetworkContext mSendBuffer;
 };

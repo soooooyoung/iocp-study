@@ -3,6 +3,8 @@
 #pragma comment(lib, "mswsock.lib")
 
 #include "Define.h"
+#include "SecurePool.h"
+
 #include <memory>
 #include <vector>
 #include <thread>
@@ -26,19 +28,27 @@ public:
 	bool AddListener(int index, int port);
 	bool AddClient(std::shared_ptr<NetworkClient> client);
 	void RemoveClient(NetworkClient* client);
+
+	bool PushSend(int sessionID, void* data, int transferred);
 private:
 	void WorkerThread();
+	void SendThread();
 
 	void _HandleAccept(ListenClient& host, NetworkContext& context);
-	void _HandleRecv(NetworkClient& client, NetworkContext& context, int transferred);
+	void _HandleReceive(NetworkClient& client, NetworkContext& context, int transferred);
 	void _HandleSend(NetworkClient& client, NetworkContext& context, int transferred);
 
 	bool mIsRunning = false;
 
 	HANDLE mIOCPHandle;
-	std::vector<std::thread> mThreadPool;
+
+	// using cores/2 for each thread pool
+	std::vector<std::thread> mIOThreadPool;
+	std::vector<std::thread> mPacketPool;
+
 	std::array<std::shared_ptr<ListenClient>, MAX_LISTEN_COUNT> mListenClientList;
 
 	// Connected Clients, Uses Index as SessionID
 	concurrency::concurrent_vector<std::shared_ptr<NetworkClient>> mClientList;
+	concurrency::concurrent_queue<std::shared_ptr<NetworkContext>> mSendQueue;
 };

@@ -45,5 +45,8 @@
     <ClInclude Include="ListenClient.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="SecurePool.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

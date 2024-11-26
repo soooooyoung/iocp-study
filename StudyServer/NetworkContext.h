@@ -3,41 +3,46 @@
 #include <vector>
 #include <array>
 #include <span>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include "Define.h"
 
 
-class NetworkContext : public std::enable_shared_from_this<NetworkContext>
+class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
 {
 private:
-	std::array<std::uint8_t, 8096> mBuffer;
-	uint32_t mReadPos = 0;
-	uint32_t mWritePos = 0;
+	int mReadPos = 0;
+	int mWritePos = 0;
+
 
 public:
-	WSAOVERLAPPED mWsaOverlapped = { 0, };
+	std::array<std::uint8_t, 8096> mBuffer;
+
 	ContextType mContextType = ContextType::NONE;
 	SOCKET mSocket = INVALID_SOCKET;
-
+	std::int32_t mSessionID = 0;
 public:
 	NetworkContext();
 	virtual ~NetworkContext() {}
 
-	/* Reset Context */
-	void Clear();
+	/* Reset Context for Next I/O Operation */
+	void ClearOverlapped();
 
 	/* Buffer Management */
-	uint32_t GetRemainSize() { return mBuffer.size() - mWritePos; }
-	uint32_t GetDataSize() { return mWritePos - mReadPos; }
+	int GetRemainSize() { return mBuffer.size() - mWritePos; }
+	int GetDataSize() { return mWritePos - mReadPos; }
 	std::uint8_t* GetWriteBuffer() { AlignBuffer(); return mBuffer.data() + mWritePos; }
 	std::uint8_t* GetReadBuffer() { return mBuffer.data() + mReadPos; }
 
 	void ResetBuffer();
 	void AlignBuffer();
-	//void ResizeBuffer(size_t size);
 
-	bool Write(std::span<std::uint8_t> data);
+
+	bool Write(void* data, std::size_t size);
 	bool Write(int size);
 
 	bool Read(std::span<std::uint8_t> data);
 	bool Read(int size);
+
+
 };
