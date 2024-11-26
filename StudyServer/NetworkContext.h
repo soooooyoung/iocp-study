@@ -11,13 +11,10 @@
 class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
 {
 private:
+	std::array<std::uint8_t, 8096> mBuffer;
 	int mReadPos = 0;
 	int mWritePos = 0;
-
-
 public:
-	std::array<std::uint8_t, 8096> mBuffer;
-
 	ContextType mContextType = ContextType::NONE;
 	SOCKET mSocket = INVALID_SOCKET;
 	std::int32_t mSessionID = 0;

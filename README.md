@@ -61,17 +61,16 @@ In the initial design, the NetworkContext class contained a member variable of t
 class NetworkContext
 {
 private:
-std::array<std::uint8_t, 8096> mBuffer;
-int mReadPos = 0;
-int mWritePos = 0;
-
+	std::array<std::uint8_t, 8096> mBuffer;
+	int mReadPos = 0;
+	int mWritePos = 0;
 public:
 	WSAOVERLAPPED mWsaOverlapped = { 0, };
 //...
 }
 ```
 
-This allowed the association of asynchronous I/O operations with the `WSAOVERLAPPED` structure as a member, but had limitations when additional context information was required.
+This allowed the association of asynchronous I/O operations with the `WSAOVERLAPPED` structure as a member, but had limitations when additional context information (other than buffer) was required.
 
 Directly casting the entire NetworkContext object to functions like WSASend or WSARecv could lead to issues, as these functions expect a pointer to an OVERLAPPED structure.
 
@@ -84,11 +83,10 @@ class NetworkContext : public OVERLAPPED
 {
 private:
 	std::array<std::uint8_t, 8096> mBuffer;
-
 	int mReadPos = 0;
 	int mWritePos = 0;
 //..
 }
 ```
 
-Inheritance ensures proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.
+This simplified proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.
