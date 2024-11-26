@@ -41,6 +41,8 @@
 
 ### 주요 적용 사항
 
+![](images/아완벽히이해했어.jpg)
+
 #### IOCP에서 사용자 정의 컨텍스트 사용
 
 I/O operation 완료 시에 NetworkContext 객체와 OVERLAPPED 구조체의 호환성을 유지하면서 추가 데이터를 함께 전달 해야 했습니다.
