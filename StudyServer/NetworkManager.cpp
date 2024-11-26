@@ -265,7 +265,20 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 	}
 
 	// Register Client
-	auto client = std::make_shared<NetworkClient>();
+	
+	std::shared_ptr<NetworkClient> client = nullptr;
+
+	if (mClientPool.empty())
+	{
+		client = std::make_shared<NetworkClient>();
+	}
+	else
+	{
+		if (false == mClientPool.try_pop(client))
+		{
+			client = std::make_shared<NetworkClient>();
+		}
+	}
 
 	client->SetSocket(clientSocket);
 
@@ -339,6 +352,19 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 		return false;
 	}
 
+
+	// Reused from the pool
+	if (client->GetSessionID() > 0 &&
+		client->GetSessionID() < mClientList.size())
+	{
+		if (nullptr != mClientList.at(client->GetSessionID()))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	// For real world scenario, should use a session manager to assign session id
 	client->SetSessionID(static_cast<std::int32_t>(mClientList.size()));
 	mClientList.push_back(std::move(client));
@@ -370,11 +396,13 @@ void NetworkManager::RemoveClient(NetworkClient* client)
 	}
 
 	ptrClient->Close();
-	
 	printf_s("Client Disconnected Session: %d\n", sessionID);
 
-	ptrClient.reset();
-	mClientList[sessionID] = nullptr;
+	// concurrent vector does not support erase so we're reusing this
+	mClientPool.push(ptrClient);
+
+	//ptrClient.reset();
+	//mClientList[sessionID] = nullptr;
 }
 
 bool NetworkManager::PushSend(int sessionID, void* data, int transferred)

@@ -50,5 +50,8 @@ private:
 
 	// Connected Clients, Uses Index as SessionID
 	concurrency::concurrent_vector<std::shared_ptr<NetworkClient>> mClientList;
+	// Vacant SessionID Pool
+	concurrency::concurrent_queue<std::shared_ptr<NetworkClient>> mClientPool;
+
 	concurrency::concurrent_queue<std::shared_ptr<NetworkContext>> mSendQueue;
 };
