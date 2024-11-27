@@ -270,7 +270,6 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 	}
 
 	// Register Client
-	
 	std::shared_ptr<NetworkClient> client = nullptr;
 
 	if (mClientPool.empty())
@@ -281,6 +280,18 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 	{
 		if (false == mClientPool.try_pop(client))
 		{
+			client = std::make_shared<NetworkClient>();
+		}
+
+		auto curTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+		if (REUSE_SESSION_TIME < curTimeSec - client->GetLastCloseTime())
+		{
+			client->Init();
+		}
+		else
+		{
+			mClientPool.push(client);
 			client = std::make_shared<NetworkClient>();
 		}
 	}
@@ -361,6 +372,7 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 		if (nullptr != mClientList.at(client->GetSessionID()))
 		{
 			return true;
+
 		}
 
 		return false;

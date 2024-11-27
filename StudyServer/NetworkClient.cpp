@@ -9,6 +9,7 @@ NetworkClient::NetworkClient()
 
 bool NetworkClient::Init()
 {
+	mLastCloseTimeInSeconds = UINT32_MAX;
 	return true;
 }
 
@@ -100,6 +101,7 @@ void NetworkClient::Close(bool bIsForce)
 
 	closesocket(mSocket);
 	mSocket = INVALID_SOCKET;
+	mLastCloseTimeInSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 // unused for now

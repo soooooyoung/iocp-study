@@ -12,6 +12,7 @@
 #include <concurrent_vector.h>
 
 const UINT64 MAX_LISTEN_COUNT = 1;
+const UINT64 REUSE_SESSION_TIME = 3;
 
 class ListenClient;
 class NetworkClient;
