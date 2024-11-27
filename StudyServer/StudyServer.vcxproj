@@ -135,13 +135,16 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
+    <ClCompile Include="NetworkDispatcher.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ListenClient.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkContext.h" />
+    <ClInclude Include="NetworkDispatcher.h" />
     <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="NetworkPacket.h" />
     <ClInclude Include="SecureQueue.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="SecurePool.h" />

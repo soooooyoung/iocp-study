@@ -20,7 +20,6 @@ public:
 	std::int32_t GetSessionID() { return mSessionID; }
 	void SetSessionID(std::int32_t sessionID) { mSessionID = sessionID; }
 
-
 	virtual bool Init();
 	virtual void Close(bool bIsForce = false);
 	virtual void Update();
@@ -28,8 +27,7 @@ public:
 	bool Receive();
 	bool Send(NetworkContext& context);
 
-	//bool PushSend(void* data, int transferred);
-
+	std::weak_ptr<NetworkContext> GetContext() { return mContext; }
 protected:
 	std::int32_t mSessionID = 0;
 	SOCKET mSocket = INVALID_SOCKET;

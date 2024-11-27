@@ -56,19 +56,6 @@ bool NetworkClient::Send(NetworkContext& context)
 	return true;
 }
 
-//bool NetworkClient::PushSend(void* data, int transferred)
-//{
-//	std::shared_ptr<NetworkContext> context = std::make_shared<NetworkContext>();
-//	if (false == context->Write(data, transferred))
-//	{
-//		return false;
-//	}
-//
-//	mSendQueue.push(std::move(context));
-//
-//	return true;
-//}
-
 bool NetworkClient::Receive()
 {
 	DWORD dwFlag = 0;

@@ -1,9 +1,11 @@
 #include "NetworkManager.h"
 #include "NetworkClient.h"
+#include "NetworkDispatcher.h"
 #include "ListenClient.h"
 
 NetworkManager::NetworkManager() : mIsRunning(false), mIOCPHandle(INVALID_HANDLE_VALUE)
 {
+	mDispatcher = new NetworkDispatcher();
 }
 
 NetworkManager::~NetworkManager()
@@ -13,6 +15,11 @@ NetworkManager::~NetworkManager()
 
 bool NetworkManager::Initialize()
 {
+	if (false == mDispatcher->Initialize())
+	{
+		return false;
+	}
+
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -22,15 +29,13 @@ bool NetworkManager::Initialize()
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);
 
-	int maxThreadCount = systemInfo.dwNumberOfProcessors;
 
-	// 60% for I/O
-	int ioThreadCount = static_cast<int>(maxThreadCount * 0.6); 
+	int ioThreadCount = systemInfo.dwNumberOfProcessors / 2;
 
-	// Remainder for packet processing, leave one for main thread
-	int packetThreadCount = maxThreadCount - ioThreadCount - 1;  
+	// FIXME: configure in server settings
+	int packetThreadCount = 1;
 
-	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, maxThreadCount);
+	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, ioThreadCount);
 
 	if (NULL == mIOCPHandle)
 	{
@@ -310,13 +315,9 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 		return;
 	}
 
-	if (false == PushSend(client.GetSessionID(), context.GetReadBuffer(), transferred))
-	{
-		printf_s("Context Read Error: PushPacket\n");
-		return;
-	}
+	// Push to Dispatcher for Deserialization Queue
+	mDispatcher->EnqueueClientPacket(client.GetContext());
 
-	context.Read(transferred);
 	client.Receive();
 }
 
@@ -416,4 +417,6 @@ bool NetworkManager::PushSend(int sessionID, void* data, int transferred)
 	context->mContextType = ContextType::SEND;
 	context->mSessionID = sessionID;
 	mSendQueue.push(std::move(context));
+
+	return true;
 }

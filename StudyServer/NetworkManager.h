@@ -16,6 +16,7 @@ const UINT64 MAX_LISTEN_COUNT = 1;
 class ListenClient;
 class NetworkClient;
 class NetworkContext;
+class NetworkDispatcher;
 class NetworkManager
 {
 public:
@@ -41,8 +42,8 @@ private:
 	bool mIsRunning = false;
 
 	HANDLE mIOCPHandle;
+	NetworkDispatcher* mDispatcher;
 
-	// using cores/2 for each thread pool
 	std::vector<std::thread> mIOThreadPool;
 	std::vector<std::thread> mPacketPool;
 
