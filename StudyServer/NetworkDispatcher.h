@@ -1,7 +1,5 @@
 #pragma once
 #include <concurrent_queue.h>
-#include <thread>
-#include "Define.h"
 
 class NetworkContext;
 class NetworkPacket;

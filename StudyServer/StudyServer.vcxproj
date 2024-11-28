@@ -145,9 +145,11 @@
     <ClInclude Include="NetworkDispatcher.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkPacket.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="SecureQueue.h" />
-    <ClInclude Include="Define.h" />
     <ClInclude Include="SecurePool.h" />
+    <ClInclude Include="SharedConst.h" />
+    <ClInclude Include="SharedEnum.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

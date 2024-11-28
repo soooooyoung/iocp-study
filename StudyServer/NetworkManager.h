@@ -1,18 +1,6 @@
 #pragma once
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "mswsock.lib")
-
-#include "Define.h"
-#include "SecurePool.h"
-
-#include <memory>
-#include <vector>
-#include <thread>
-#include <array>
 #include <concurrent_vector.h>
-
-const UINT64 MAX_LISTEN_COUNT = 1;
-const UINT64 REUSE_SESSION_TIME = 3;
+#include <concurrent_queue.h>
 
 class ListenClient;
 class NetworkClient;

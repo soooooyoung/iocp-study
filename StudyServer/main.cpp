@@ -1,9 +1,9 @@
+#include "pch.h"
 #include "NetworkManager.h"
 #include "SecurePool.h"
 
 int main()
 {
-
 	NetworkManager networkManager;
 	if (false == networkManager.Initialize())
 	{

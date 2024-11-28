@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "NetworkManager.h"
 #include "NetworkClient.h"
 #include "NetworkDispatcher.h"
@@ -171,8 +172,6 @@ void NetworkManager::WorkerThread()
 			printf_s("RemoveClient: %d\n", WSAGetLastError());
 			continue;
 		}
-
-		printf_s("ContextType: %d, IoSize: %d\n", context->mContextType, dwIoSize);
 
 		switch (context->mContextType)
 		{
@@ -413,9 +412,6 @@ void NetworkManager::RemoveClient(NetworkClient* client)
 
 	// concurrent vector does not support erase so we're reusing this
 	mClientPool.push(ptrClient);
-
-	//ptrClient.reset();
-	//mClientList[sessionID] = nullptr;
 }
 
 bool NetworkManager::PushSend(int sessionID, void* data, int transferred)

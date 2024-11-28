@@ -33,9 +33,6 @@
     <ClInclude Include="NetworkManager.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Define.h">
-      <Filter>ServerCore</Filter>
-    </ClInclude>
     <ClInclude Include="SecureQueue.h">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -56,6 +53,15 @@
     </ClInclude>
     <ClInclude Include="NetworkDispatcher.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>ServerCore</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedEnum.h">
+      <Filter>ServerCore</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedConst.h">
+      <Filter>ServerCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

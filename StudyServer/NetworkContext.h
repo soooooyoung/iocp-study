@@ -1,12 +1,4 @@
 #pragma once
-#include <memory>
-#include <vector>
-#include <array>
-#include <span>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include "Define.h"
-
 
 class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
 {
@@ -40,6 +32,4 @@ public:
 
 	bool Read(std::span<std::uint8_t> data);
 	bool Read(int size);
-
-
 };
