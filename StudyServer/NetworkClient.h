@@ -24,21 +24,17 @@ public:
 
 	virtual bool Init();
 	virtual void Close(bool bIsForce = false);
-	virtual void Update();
 
 	bool Receive();
 	bool Send(NetworkContext& context);
 
 	std::shared_ptr<NetworkPacket> GetPacket();
-	std::weak_ptr<NetworkContext> GetContext() { return mContext; }
 protected:
 	std::int32_t mSessionID = 0;
 	UINT64 mLastCloseTimeInSeconds = 0;
 	bool mIsConnected = false;
 
 	SOCKET mSocket = INVALID_SOCKET;
-
-
 
 	std::shared_ptr<NetworkContext> mContext;
 	NetworkContext mSendBuffer;

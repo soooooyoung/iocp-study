@@ -133,11 +133,3 @@ void NetworkClient::Close(bool bIsForce)
 	mLastCloseTimeInSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-// unused for now
-void NetworkClient::Update()
-{
-	while (true)
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	}
-}
