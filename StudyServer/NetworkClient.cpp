@@ -60,7 +60,7 @@ bool NetworkClient::Send(NetworkContext& context)
 	return true;
 }
 
-std::shared_ptr<NetworkPacket> NetworkClient::GetPacket()
+std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
 {
 	auto remainSize = mContext->GetDataSize();
 
@@ -76,7 +76,7 @@ std::shared_ptr<NetworkPacket> NetworkClient::GetPacket()
 		return nullptr;
 	}
 
-	auto packet = std::make_shared<NetworkPacket>();
+	auto packet = std::make_unique<NetworkPacket>();
 	packet->Header.PacketLength = packetHeader->PacketLength;
 	packet->Header.PacketID = packetHeader->PacketID;
 
@@ -84,7 +84,7 @@ std::shared_ptr<NetworkPacket> NetworkClient::GetPacket()
 
 	mContext->Read(packet->GetPacketSize());
 
-	return std::move(packet);
+	return packet;
 }
 
 bool NetworkClient::Receive()

@@ -24,7 +24,7 @@ public:
 	bool Receive();
 	bool Send(NetworkContext& context);
 
-	std::shared_ptr<NetworkPacket> GetPacket();
+	std::unique_ptr<NetworkPacket> GetPacket();
 protected:
 	std::int32_t mSessionID = 0;
 	UINT64 mLastCloseTimeInSeconds = 0;
