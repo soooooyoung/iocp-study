@@ -84,7 +84,7 @@ std::shared_ptr<NetworkPacket> NetworkClient::GetPacket()
 
 	mContext->Read(packet->GetPacketSize());
 
-	return packet;
+	return std::move(packet);
 }
 
 bool NetworkClient::Receive()
