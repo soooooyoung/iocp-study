@@ -1,5 +1,6 @@
 #include "NetworkClient.h"
 #include "NetworkContext.h"
+#include "NetworkPacket.h"
 
 NetworkClient::NetworkClient()
 {
@@ -10,6 +11,7 @@ NetworkClient::NetworkClient()
 bool NetworkClient::Init()
 {
 	mLastCloseTimeInSeconds = UINT32_MAX;
+	mIsConnected = true;
 	return true;
 }
 
@@ -55,6 +57,33 @@ bool NetworkClient::Send(NetworkContext& context)
 	}
 
 	return true;
+}
+
+std::shared_ptr<NetworkPacket> NetworkClient::GetPacket()
+{
+	auto remainSize = mContext->GetDataSize();
+
+	if (remainSize < sizeof(NetworkPacket::PacketHeader))
+	{
+		return nullptr;
+	}
+
+	auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(mContext->GetReadBuffer());
+
+	if (remainSize < packetHeader->PacketLength)
+	{
+		return nullptr;
+	}
+
+	auto packet = std::make_shared<NetworkPacket>();
+	packet->Header.PacketLength = packetHeader->PacketLength;
+	packet->Header.PacketID = packetHeader->PacketID;
+
+	std::memcpy(packet->Body.data(), mContext->GetReadBuffer() + sizeof(NetworkPacket::PacketHeader), packet->GetBodySize());
+
+	mContext->Read(packet->GetPacketSize());
+
+	return packet;
 }
 
 bool NetworkClient::Receive()

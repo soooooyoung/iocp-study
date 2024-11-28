@@ -206,9 +206,7 @@ void NetworkManager::WorkerThread()
 		}
 		break;
 		}
-
 	}
-
 }
 
 void NetworkManager::SendThread()
@@ -285,17 +283,14 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 
 		auto curTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-		if (REUSE_SESSION_TIME < curTimeSec - client->GetLastCloseTime())
-		{
-			client->Init();
-		}
-		else
+		if (REUSE_SESSION_TIME > curTimeSec - client->GetLastCloseTime())
 		{
 			mClientPool.push(client);
 			client = std::make_shared<NetworkClient>();
 		}
 	}
 
+	client->Init();
 	client->SetSocket(clientSocket);
 
 	if (false == AddClient(std::move(client)))
@@ -326,9 +321,16 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 		return;
 	}
 
-	// Push to Dispatcher for Deserialization Queue
-	mDispatcher->EnqueueClientPacket(client.GetContext());
+	// Packet Deserialization
+	std::shared_ptr<NetworkPacket> packet = client.GetPacket();
+	
+	// Push Packet to Dispatcher
+	if (nullptr != packet)
+	{
+		mDispatcher->PushPacket(std::move(packet));
+	}
 
+	// Bind for next receive
 	client.Receive();
 }
 
@@ -364,7 +366,6 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 		return false;
 	}
 
-
 	// Reused from the pool
 	if (client->GetSessionID() > 0 &&
 		client->GetSessionID() < mClientList.size())
@@ -372,7 +373,6 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 		if (nullptr != mClientList.at(client->GetSessionID()))
 		{
 			return true;
-
 		}
 
 		return false;
