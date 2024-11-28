@@ -321,7 +321,7 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 	}
 
 	// Packet Deserialization
-	std::shared_ptr<NetworkPacket> packet = client.GetPacket();
+	std::unique_ptr<NetworkPacket> packet = client.GetPacket();
 	
 	// Push Packet to Dispatcher
 	if (nullptr != packet)

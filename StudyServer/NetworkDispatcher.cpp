@@ -23,7 +23,7 @@ bool NetworkDispatcher::Initialize()
 	return true;
 }
 
-void NetworkDispatcher::PushPacket(std::shared_ptr<NetworkPacket> packet)
+void NetworkDispatcher::PushPacket(std::unique_ptr<NetworkPacket> packet)
 {
 	mPacketQueue.push(std::move(packet));
 }
