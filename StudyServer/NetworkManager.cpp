@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "NetworkManager.h"
 #include "NetworkClient.h"
+#include "NetworkContext.h"
 #include "NetworkDispatcher.h"
 #include "ListenClient.h"
 
@@ -30,12 +31,7 @@ bool NetworkManager::Initialize()
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);
 
-
 	int ioThreadCount = systemInfo.dwNumberOfProcessors / 2;
-
-	// FIXME: configure in server settings
-	int packetThreadCount = 1;
-
 	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, ioThreadCount);
 
 	if (NULL == mIOCPHandle)
@@ -49,11 +45,6 @@ bool NetworkManager::Initialize()
 	for (int i = 0; i < ioThreadCount; ++i)
 	{
 		mIOThreadPool.emplace_back([this]() { WorkerThread(); });
-	}
-
-	for (int i = 0; i < packetThreadCount; ++i)
-	{
-		mPacketPool.emplace_back([this]() { SendThread(); });
 	}
 
 	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
@@ -168,8 +159,13 @@ void NetworkManager::WorkerThread()
 		if (FALSE == bSuccess ||
 			(0 == dwIoSize && ContextType::ACCEPT != context->mContextType))
 		{
-			RemoveClient(client);
-			printf_s("RemoveClient: %d\n", WSAGetLastError());
+			if (nullptr != client)
+			{
+				printf_s("Client Disconnected: %d\n", client->GetSessionID());
+				RemoveClient(*client);
+			}
+
+			printf_s("WorkerThread Fail: %d\n", WSAGetLastError());
 			continue;
 		}
 
@@ -208,46 +204,6 @@ void NetworkManager::WorkerThread()
 	}
 }
 
-void NetworkManager::SendThread()
-{
-	while (mIsRunning)
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-		if (mSendQueue.empty())
-		{
-			continue;
-		}
-
-		std::shared_ptr<NetworkContext> context = nullptr;
-
-		if (false == mSendQueue.try_pop(context))
-		{
-			continue;
-		}
-
-		if (context->mSessionID < 0 || context->mSessionID >= mClientList.size())
-		{
-			continue;
-		}
-
-		// concurrent safe as long as index does not exceed the size
-		auto client = mClientList.at(context->mSessionID);
-
-		if (nullptr == client)
-		{
-			continue;
-		}
-
-		if (false == client->Send(*context))
-		{
-			printf_s("SendThread: Send Error\n");
-		}
-
-		// 여기서 초기화
-		context.reset();
-	}
-}
 
 void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& context)
 {
@@ -255,7 +211,7 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 
 	if (INVALID_SOCKET == clientSocket)
 	{
-		printf_s("Accept Completion Error on ListenClient: %d\n", WSAGetLastError());
+		printf_s("_HandleAccept ERROR INVALID_SOCKET: %d\n", WSAGetLastError());
 		return;
 	}
 
@@ -282,13 +238,14 @@ void NetworkManager::_HandleAccept(ListenClient& listenClient, NetworkContext& c
 
 		auto curTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-		if (REUSE_SESSION_TIME > curTimeSec - client->GetLastCloseTime())
+		if (REUSE_SESSION_TIME < curTimeSec - client->GetLastCloseTime())
 		{
 			mClientPool.push(client);
 			client = std::make_shared<NetworkClient>();
 		}
 	}
 
+	client->Reset();
 	client->Init();
 	client->SetSocket(clientSocket);
 
@@ -310,24 +267,27 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 {
 	if (transferred <= 0)
 	{
-		printf_s("Recv Error: %d\n", WSAGetLastError());
+		printf_s("_HandleReceive Error: %d\n", WSAGetLastError());
 		return;
 	}
 
 	if (false == context.Write(transferred))
 	{
-		printf_s("Context Read Error: Read\n");
+		printf_s("_HandleReceive Error: Failed to Write\n");
 		return;
 	}
 
 	// Packet Deserialization
 	std::unique_ptr<NetworkPacket> packet = client.GetPacket();
-	
-	// Push Packet to Dispatcher
-	if (nullptr != packet)
+
+	if (nullptr == packet)
 	{
-		mDispatcher->PushPacket(std::move(packet));
+		printf_s("_HandleReceive Error: Failed to GetPacket\n");
+		return;
 	}
+
+	packet->Header.SessionID = client.GetSessionID();
+	mDispatcher->PushPacket(std::move(packet));
 
 	// Bind for next receive
 	client.Receive();
@@ -337,11 +297,28 @@ void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context,
 {
 	if (transferred <= 0)
 	{
-		printf_s("_HandleSend: Send Error: %d\n", WSAGetLastError());
+		printf_s("_HandleSend Error: %d\n", WSAGetLastError());
 		return;
 	}
 
-	context.Read(transferred);
+	if (false == context.Read(transferred))
+	{
+		printf_s("_HandleSend Error: Failed to Read\n");
+		return;
+	}
+
+	if (context.GetDataSize() > 0)
+	{
+		if (false == client.Send(context))
+		{
+			printf_s("_HandleSend Error: Failed to Send\n");
+			return;
+		}
+	}
+	else
+	{
+		client.SendComplete();
+	}
 }
 
 bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
@@ -355,13 +332,13 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 
 	if (hIOCP == INVALID_HANDLE_VALUE)
 	{
-		printf_s("CreateIoCompletionPort Error : %d\n", GetLastError());
+		printf_s("AddClient Error: CreateIoCompletionPort, %d\n", GetLastError());
 		return false;
 	}
 
 	if (false == client->Receive())
 	{
-		printf_s("Client Receive() Error\n");
+		printf_s("AddClient Error: Receive\n");
 		return false;
 	}
 
@@ -369,38 +346,36 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 	if (client->GetSessionID() > 0 &&
 		client->GetSessionID() < mClientList.size())
 	{
-		if (nullptr != mClientList.at(client->GetSessionID()))
+		if (nullptr == mClientList.at(client->GetSessionID()))
 		{
-			return true;
+			mClientList[client->GetSessionID()] = std::move(client);
 		}
 
-		return false;
+		return true;
 	}
 
 	// For real world scenario, should use a session manager to assign session id
-	client->SetSessionID(static_cast<std::int32_t>(mClientList.size()));
+	auto sessionID = static_cast<uint32_t>(mClientList.size()) + 1;
+	client->SetSessionID(sessionID);
+
+	mDispatcher->AddSession(client);
 	mClientList.push_back(std::move(client));
 
-	printf_s("Client Connected\n");
+	printf_s("Client Connected SessionID: %d\n", sessionID);
 
 	return true;
 }
 
-void NetworkManager::RemoveClient(NetworkClient* client)
+void NetworkManager::RemoveClient(NetworkClient& client)
 {
-	if (nullptr == client)
-	{
-		return;
-	}
-
-	auto sessionID = client->GetSessionID();
+	auto sessionID = client.GetSessionID();
 
 	if (sessionID < 0 || sessionID >= mClientList.size())
 	{
 		return;
 	}
 
-	auto ptrClient = mClientList.at(sessionID);
+	auto& ptrClient = mClientList.at(sessionID);
 
 	if (nullptr == ptrClient)
 	{
@@ -408,23 +383,9 @@ void NetworkManager::RemoveClient(NetworkClient* client)
 	}
 
 	ptrClient->Close();
-	printf_s("Client Disconnected Session: %d\n", sessionID);
+	printf_s("Client Disconnected SessionID: %d\n", sessionID);
 
 	// concurrent vector does not support erase so we're reusing this
+	ptrClient->Reset();
 	mClientPool.push(ptrClient);
-}
-
-bool NetworkManager::PushSend(int sessionID, void* data, int transferred)
-{
-	std::shared_ptr<NetworkContext> context = std::make_shared<NetworkContext>();
-	if (false == context->Write(data, transferred))
-	{
-		return false;
-	}
-
-	context->mContextType = ContextType::SEND;
-	context->mSessionID = sessionID;
-	mSendQueue.push(std::move(context));
-
-	return true;
 }

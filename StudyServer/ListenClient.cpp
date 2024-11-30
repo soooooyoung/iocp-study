@@ -1,4 +1,4 @@
-#include "pch.h"
+ #include "pch.h"
 #include "ListenClient.h"
 #include "NetworkContext.h"
 
@@ -15,7 +15,6 @@ bool ListenClient::Init()
 	{
 		return false; 
 	}
-
 
 	return true;
 }
@@ -59,22 +58,22 @@ bool ListenClient::PostAccept()
 		return false;
 	}
 
-	mContext->ClearOverlapped();
-	mContext->ResetBuffer();
-	mContext->mContextType = ContextType::ACCEPT;
-	mContext->mSocket = socket;
+	mReceiveContext->ClearOverlapped();
+	mReceiveContext->ResetBuffer();
+	mReceiveContext->mContextType = ContextType::ACCEPT;
+	mReceiveContext->mSocket = socket;
 
 	DWORD dwRecvNumBytes = 0;
 	DWORD dwFlag = 0;
 	
 	if (FALSE == AcceptEx(mSocket, 
 		socket, 
-		mContext->GetWriteBuffer(),
+		mReceiveContext->GetWriteBuffer(),
 		0, 
 		sizeof(SOCKADDR_IN) + 16, 
 		sizeof(SOCKADDR_IN) + 16, 
 		&dwRecvNumBytes, 
-		(LPOVERLAPPED)mContext.get()))
+		(LPOVERLAPPED)mReceiveContext.get()))
 	{
 		if (WSAGetLastError() != ERROR_IO_PENDING)
 		{

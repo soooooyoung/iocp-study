@@ -97,3 +97,9 @@ bool NetworkContext::Read(int size)
 	mReadPos += size;
 	return true;
 }
+
+void NetworkContext::Reset()
+{
+	ResetBuffer();
+	ClearOverlapped();
+}

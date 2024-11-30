@@ -18,6 +18,8 @@
 #include <span>
 #include <string>
 #include <cstdint>
+#include <queue>
 
 #include "SharedEnum.h"
 #include "SharedConst.h"
+#include "NetworkPacket.h"

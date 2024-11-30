@@ -1,8 +1,7 @@
 #pragma once
-#include <concurrent_queue.h>
+#include "pch.h"
 
-#include "NetworkContext.h"
-
+class NetworkContext;
 class NetworkPacket;
 class NetworkClient : public std::enable_shared_from_this<NetworkClient>
 {
@@ -10,28 +9,31 @@ public:
 	NetworkClient();
 	virtual ~NetworkClient() {}
 
-	SOCKET GetSocket() { return mSocket; }
+	SOCKET GetSocket() const { return mSocket; }
 	void SetSocket(SOCKET socket) { mSocket = socket; }
 
-	std::int32_t GetSessionID() { return mSessionID; }
+	uint32_t GetSessionID() const { return mSessionID; }
 	void SetSessionID(std::int32_t sessionID) { mSessionID = sessionID; }
 
-	UINT64 GetLastCloseTime() { return mLastCloseTimeInSeconds; }
+	uint64_t GetLastCloseTime() const { return mLastCloseTimeInSeconds; }
+	bool IsConnected() const { return mIsConnected; }
 
 	virtual bool Init();
 	virtual void Close(bool bIsForce = false);
+	virtual void Reset();
 
 	bool Receive();
 	bool Send(NetworkContext& context);
+	void SendComplete();
 
 	std::unique_ptr<NetworkPacket> GetPacket();
 protected:
-	std::int32_t mSessionID = 0;
-	UINT64 mLastCloseTimeInSeconds = 0;
+	uint64_t mLastCloseTimeInSeconds = 0;
+	SOCKET mSocket = INVALID_SOCKET;
+	
+	uint32_t mSessionID = 0;
 	bool mIsConnected = false;
 
-	SOCKET mSocket = INVALID_SOCKET;
-
-	std::shared_ptr<NetworkContext> mContext;
-	NetworkContext mSendBuffer;
+	std::unique_ptr<NetworkContext> mReceiveContext;
+	std::shared_ptr<NetworkContext> mSendContext;
 };

@@ -9,7 +9,7 @@ private:
 public:
 	ContextType mContextType = ContextType::NONE;
 	SOCKET mSocket = INVALID_SOCKET;
-	std::int32_t mSessionID = 0;
+	uint32_t mSessionID = 0;
 public:
 	NetworkContext();
 	virtual ~NetworkContext() {}
@@ -32,4 +32,6 @@ public:
 
 	bool Read(std::span<std::uint8_t> data);
 	bool Read(int size);
+
+	void Reset();
 };
