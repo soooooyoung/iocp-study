@@ -89,7 +89,7 @@ private:
 
 This simplified proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.
 
-### Handling Packet Serialization, Deserialization Process on IOThread
+### Handling Packet Processing on IOThread
 
 Deserialization of received packets is performed directly in the IOCP thread. IOCP threads are lightweight and can efficiently handle both IO-bound and CPU-bound tasks.
 
