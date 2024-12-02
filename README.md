@@ -90,3 +90,52 @@ private:
 ```
 
 This simplified proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.
+
+#### Handling Packet Serialization, Deserialization Process on IOThread
+
+Deserialization of received packets is performed directly in the IOCP thread. IOCP threads are lightweight and can efficiently handle both IO-bound and CPU-bound tasks.
+
+> **\_HandleReceive**: handles the completion of a network receive operation
+
+```cpp
+void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& context, int transferred)
+{
+	// ensure a valid number of bytes
+	if (transferred <= 0)
+	{
+		printf_s("_HandleReceive Error: %d\n", WSAGetLastError());
+		return;
+	}
+
+	// update buffer information for internal buffer
+	if (false == context.Write(transferred))
+	{
+		printf_s("_HandleReceive Error: Failed to Write\n");
+		return;
+	}
+
+	// Packet Deserialization
+	// converts the raw bytes into a structured NetworkPacket
+	std::unique_ptr<NetworkPacket> packet = client.GetPacket();
+
+	if (nullptr == packet)
+	{
+		printf_s("_HandleReceive Error: Failed to GetPacket\n");
+		return;
+	}
+
+	packet->Header.SessionID = client.GetSessionID();
+	mDispatcher->PushPacket(std::move(packet));
+
+	// Bind for next receive
+	client.Receive();
+}
+```
+
+By processing the data directly on the same IOCP thread, the CPU can leverage cache locality because the data is likely still in the CPU cache from the I/O operation.
+
+This eliminates the need to load the same data into cache again if it were passed to a separate worker thread, reducing memory access latency.
+
+For high-frequency, small packets, this approach improves overall throughput by avoiding the overhead of transferring data to another thread. However, larger packets, which may require more complex processing, could risk overloading the IOCP thread.
+
+Fully deserialized packet is then pushed to Once the packet is fully deserialized, it is forwarded to the NetworkDispatcher for routing to the application layer.

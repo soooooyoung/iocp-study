@@ -79,3 +79,50 @@ public:
 ```
 
 이러한 상속은 메모리 정렬을 보장하여 시스템이 OVERLAPPED 필드에 직접 접근할 수 있게 합니다. 또한, 포인터 연산 없이도 나머지 컨텍스트에 접근할 수 있게 되었습니다. 그러나 이러한 상속은 NetworkContext와 OVERLAPPED 간의 의미적 관계가 없기 때문에 상속의 오용으로 간주될 수 있습니다.
+
+#### IOThread에서 패킷 직렬화 및 역직렬화 처리
+
+수신된 패킷의 역직렬화는 IOCP 스레드에서 직접 수행됩니다.
+
+> **\_HandleReceive**: 네트워크 수신 작업 완료를 처리합니다
+
+```cpp
+void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& context, int transferred)
+{
+	// 유효한 바이트 수인지 확인
+	if (transferred <= 0)
+	{
+		printf_s("_HandleReceive Error: %d\n", WSAGetLastError());
+		return;
+	}
+
+	// 내부 버퍼 정보를 업데이트
+	if (false == context.Write(transferred))
+	{
+		printf_s("_HandleReceive Error: Failed to Write\n");
+		return;
+	}
+
+	// 패킷 역직렬화
+	// 수신된 raw 데이터를 구조화된 NetworkPacket으로 변환
+	std::unique_ptr<NetworkPacket> packet = client.GetPacket();
+
+	if (nullptr == packet)
+	{
+		printf_s("_HandleReceive Error: Failed to GetPacket\n");
+		return;
+	}
+
+	packet->Header.SessionID = client.GetSessionID();
+	mDispatcher->PushPacket(std::move(packet));
+
+	// 다음 수신 작업 준비
+	client.Receive();
+}
+```
+
+IOCP Thread에서 raw 데이터를 직접 처리하면 I/O 작업으로 인해 메모리에 이미 로드된 데이터를 그대로 활용할 수 있습니다 (cache locality). 이 방식은 데이터를 별도의 워커 스레드로 전달할 경우 발생하는 캐시 재로딩 작업을 방지하여 메모리 접근 지연(latency)을 줄여줍니다.
+
+고빈도, 소규모 패킷 처리에서는 데이터를 다른 스레드로 전달하는 오버헤드를 방지함으로써 전반적인 처리량(throughput)을 향상시킬 수 있습니다. 더 큰 패킷의 경우 복잡한 처리가 필요할 수 있어 IOCP 스레드가 과부하될 위험이 있습니다.
+
+변환이 완료된 패킷인 이후 `NetworkDispatcher`에 전달되어 애플리케이션 계층 서비스로 라우팅 됩니다.
