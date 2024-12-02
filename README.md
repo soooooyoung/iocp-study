@@ -47,9 +47,7 @@ This approach will outline:
 
 #### Server Logic
 
-### Implementations
-
-#### Using OVERLAPPED with IOCP and Custom Context
+### Using OVERLAPPED with IOCP and Custom Context
 
 Primary challenge was ensuring the compatibility of custom NetworkContext objects with the Windows I/O Completion Port (IOCP) mechanisms while maintaining application-specific data.
 
@@ -91,7 +89,7 @@ private:
 
 This simplified proper memory alignment, allowing the system to access the OVERLAPPED fields directly. It also eliminated the need for pointer arithmetic to retrieve the rest of the context. However, it is important to note that such inheritance might be considered misuse of inheritance because such relationship doesn't semantically exist between Network Context and OVERLAPPED.
 
-#### Handling Packet Serialization, Deserialization Process on IOThread
+### Handling Packet Serialization, Deserialization Process on IOThread
 
 Deserialization of received packets is performed directly in the IOCP thread. IOCP threads are lightweight and can efficiently handle both IO-bound and CPU-bound tasks.
 
