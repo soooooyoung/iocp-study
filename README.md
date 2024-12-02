@@ -136,4 +136,4 @@ This eliminates the need to load the same data into cache again if it were passe
 
 For high-frequency, small packets, this approach improves overall throughput by avoiding the overhead of transferring data to another thread. However, larger packets, which may require more complex processing, could risk overloading the IOCP thread.
 
-Fully deserialized packet is then pushed to Once the packet is fully deserialized, it is forwarded to the NetworkDispatcher for routing to the application layer.
+Once the packet is fully deserialized, it is forwarded to the NetworkDispatcher for routing to the application layer.
