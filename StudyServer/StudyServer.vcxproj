@@ -137,6 +137,7 @@
     <ClCompile Include="NetworkContext.cpp" />
     <ClCompile Include="NetworkDispatcher.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="Service.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ListenClient.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="SecureQueue.h" />
     <ClInclude Include="SecurePool.h" />
+    <ClInclude Include="Service.h" />
     <ClInclude Include="SharedConst.h" />
     <ClInclude Include="SharedEnum.h" />
   </ItemGroup>

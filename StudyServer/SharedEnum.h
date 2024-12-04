@@ -7,3 +7,9 @@ enum class ContextType
 	RECV,
 	SEND
 };
+
+enum class ServiceProtocol
+{
+	NONE,
+	ECHO,
+};

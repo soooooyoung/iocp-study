@@ -17,6 +17,9 @@
     <ClCompile Include="NetworkDispatcher.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Service.cpp">
+      <Filter>ServerCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -61,6 +64,9 @@
       <Filter>ServerCore</Filter>
     </ClInclude>
     <ClInclude Include="SharedConst.h">
+      <Filter>ServerCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Service.h">
       <Filter>ServerCore</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,27 +1,31 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "NetworkManager.h"
 #include "NetworkClient.h"
 #include "NetworkContext.h"
 #include "NetworkDispatcher.h"
 #include "ListenClient.h"
+#include "Service.h"
 
-NetworkManager::NetworkManager() : mIsRunning(false), mIOCPHandle(INVALID_HANDLE_VALUE)
+NetworkManager::NetworkManager() : 
+	mIsRunning(false), 
+	mIOCPHandle(INVALID_HANDLE_VALUE)
 {
-	mDispatcher = new NetworkDispatcher();
+	mServiceList = std::unordered_map<int, std::shared_ptr<NetworkDispatcher>>();
+	RegisterService(1, std::make_unique<Service>());
 }
 
 NetworkManager::~NetworkManager()
 {
 	WSACleanup();
+	Shutdown();
+
+	mIOThreadPool.clear();
+	mClientList.clear();
+	mClientPool.clear();
 }
 
 bool NetworkManager::Initialize()
 {
-	if (false == mDispatcher->Initialize())
-	{
-		return false;
-	}
-
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -127,6 +131,26 @@ void NetworkManager::Shutdown()
 	{
 		CloseHandle(mIOCPHandle);
 	}
+
+}
+
+bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> service)
+{
+	if (nullptr == service)
+	{
+		return false;
+	}
+
+	auto dispatcher = std::make_unique<NetworkDispatcher>();
+
+	if (false == dispatcher->Initialize(std::move(service)))
+	{
+		return false;
+	}
+
+	mServiceList.emplace(serviceID, std::move(dispatcher));
+
+	return true;
 }
 
 void NetworkManager::WorkerThread()
@@ -168,6 +192,8 @@ void NetworkManager::WorkerThread()
 			printf_s("WorkerThread Fail: %d\n", WSAGetLastError());
 			continue;
 		}
+
+		printf("WorkerThread Success: %d\n", dwIoSize);
 
 		switch (context->mContextType)
 		{
@@ -287,7 +313,26 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 	}
 
 	packet->Header.SessionID = client.GetSessionID();
-	mDispatcher->PushPacket(std::move(packet));
+
+	if (mServiceList.empty())
+	{
+		printf_s("_HandleReceive Error: No Service\n");
+		return;
+	}
+
+
+	// FIXME: For now, we're using the first service
+	auto& dispatcher = mServiceList.begin()->second;
+
+	if (nullptr == dispatcher)
+	{
+		printf_s("_HandleReceive Error: No Dispatcher\n");
+		return;
+	}
+
+	dispatcher->PushPacket(std::move(packet));
+
+	context.Read(transferred);
 
 	// Bind for next receive
 	client.Receive();
@@ -358,7 +403,6 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 	auto sessionID = static_cast<uint32_t>(mClientList.size()) + 1;
 	client->SetSessionID(sessionID);
 
-	mDispatcher->AddSession(client);
 	mClientList.push_back(std::move(client));
 
 	printf_s("Client Connected SessionID: %d\n", sessionID);

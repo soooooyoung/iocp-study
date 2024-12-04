@@ -1,8 +1,8 @@
 #pragma once
 #include "pch.h"
 
+struct NetworkPacket;
 class NetworkContext;
-class NetworkPacket;
 class NetworkClient : public std::enable_shared_from_this<NetworkClient>
 {
 public:

@@ -1,7 +1,11 @@
 #pragma once
 #include <concurrent_vector.h>
 #include <concurrent_queue.h>
+#include <unordered_map>
+#include <functional>
 
+struct NetworkPacket;
+class Service;
 class ListenClient;
 class NetworkClient;
 class NetworkContext;
@@ -18,6 +22,8 @@ public:
 	bool AddListener(int index, int port);
 	bool AddClient(std::shared_ptr<NetworkClient> client);
 	void RemoveClient(NetworkClient& client);
+
+	bool RegisterService(int serviceID, std::unique_ptr<Service> service);
 private:
 	void WorkerThread();
 
@@ -27,7 +33,6 @@ private:
 
 	bool mIsRunning = false;
 	HANDLE mIOCPHandle;
-	NetworkDispatcher* mDispatcher;
 
 	std::vector<std::thread> mIOThreadPool;
 	std::array<std::shared_ptr<ListenClient>, MAX_LISTEN_COUNT> mListenClientList;
@@ -36,4 +41,6 @@ private:
 	concurrency::concurrent_vector<std::shared_ptr<NetworkClient>> mClientList;
 	// Vacant SessionID Pool
 	concurrency::concurrent_queue<std::shared_ptr<NetworkClient>> mClientPool;
+
+	std::unordered_map<int, std::shared_ptr<NetworkDispatcher>> mServiceList;
 };
