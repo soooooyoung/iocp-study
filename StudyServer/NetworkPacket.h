@@ -1,7 +1,17 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <memory>
 
+
+struct Packet : public std::enable_shared_from_this<Packet>
+{
+	uint32_t BodyLength = 0;
+	uint32_t PacketID = 0;
+	uint32_t SessionID = 0;
+
+	std::array<uint8_t, 8192> Body = { 0 };
+};
 
 /*
 * TODO: Multibyte integers must be converted to network byte order before sending

@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-class NetworkClient;
+struct NetworkPacket;
 class NetworkContext;
 class Service;
 class NetworkDispatcher

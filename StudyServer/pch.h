@@ -7,8 +7,9 @@
 
 // Windows
 #include <WinSock2.h>
-#include <MSWSock.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
+#include <mswsock.h>
+#include <Windows.h>
 
 // STL
 #include <memory>

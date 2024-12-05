@@ -5,7 +5,7 @@ enum class ContextType
 	NONE,
 	ACCEPT,
 	RECV,
-	SEND
+	SEND,
 };
 
 enum class ServiceProtocol

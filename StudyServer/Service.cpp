@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "Service.h"
-#include "NetworkPacket.h"
 
 Service::Service()
 {
@@ -35,5 +35,15 @@ void Service::ProcessPacket(std::shared_ptr<NetworkPacket> packet)
 void Service::Echo(const NetworkPacket& packet)
 {
 	printf_s("Echo: %s\n", packet.Body.data());
+
+	NetworkPacket responsePacket;
+	responsePacket.Header.BodyLength = packet.Header.BodyLength;
+	responsePacket.Header.PacketID = static_cast<int>(ServiceProtocol::ECHO);
+	responsePacket.Header.SessionID = packet.Header.SessionID;
+	memcpy(responsePacket.Body.data(), packet.Body.data(), packet.Header.BodyLength);
+
+	printf_s("Echo Response: %s  To Session: %d\n", responsePacket.Body.data(), responsePacket.Header.SessionID);
+
+	mSendFunction(packet.Header.SessionID, std::make_shared<NetworkPacket>(responsePacket));
 }
 

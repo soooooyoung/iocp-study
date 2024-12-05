@@ -1,5 +1,6 @@
 #pragma once
 
+struct NetworkPacket;
 class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
 {
 private:
@@ -28,6 +29,7 @@ public:
 
 
 	bool Write(void* data, std::size_t size);
+	bool Write(NetworkPacket& packet);
 	bool Write(int size);
 
 	bool Read(std::span<std::uint8_t> data);

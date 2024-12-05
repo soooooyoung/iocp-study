@@ -1,7 +1,9 @@
 #pragma once
-#include "pch.h"
+#include <concurrent_queue.h>
+#include <atomic>
+#include <memory>
+#include "NetworkPacket.h"
 
-struct NetworkPacket;
 class NetworkContext;
 class NetworkClient : public std::enable_shared_from_this<NetworkClient>
 {
@@ -22,18 +24,24 @@ public:
 	virtual void Close(bool bIsForce = false);
 	virtual void Reset();
 
+	void EnqueuePacket(std::shared_ptr<NetworkPacket> packet);
+
 	bool Receive();
-	bool Send(NetworkContext& context);
-	void SendComplete();
+	bool Send();
 
 	std::unique_ptr<NetworkPacket> GetPacket();
+
+	std::atomic<bool> mSending = true;
 protected:
 	uint64_t mLastCloseTimeInSeconds = 0;
 	SOCKET mSocket = INVALID_SOCKET;
-	
+
 	uint32_t mSessionID = 0;
 	bool mIsConnected = false;
 
 	std::unique_ptr<NetworkContext> mReceiveContext;
-	std::shared_ptr<NetworkContext> mSendContext;
+	std::unique_ptr<NetworkContext> mSendContext;
+
+	concurrency::concurrent_queue<std::shared_ptr<NetworkPacket>> mSendQueue;
+
 };

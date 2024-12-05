@@ -2,33 +2,50 @@
 #include "NetworkClient.h"
 #include "NetworkContext.h"
 
+
 NetworkClient::NetworkClient()
 {
 	mReceiveContext = std::make_unique<NetworkContext>();
+	mSendContext = std::make_unique<NetworkContext>();
 }
 
 bool NetworkClient::Init()
 {
+	Reset();
 	mLastCloseTimeInSeconds = UINT32_MAX;
 	mIsConnected = true;
 	return true;
 }
 
-bool NetworkClient::Send(NetworkContext& context)
+bool NetworkClient::Send()
 {
-	if (mSendContext != nullptr)
+	if (nullptr == mSendContext)
 	{
-		printf("Already Sending\n");
 		return false;
 	}
-
-	mSendContext = context.shared_from_this();
 
 	if (mSendContext->GetDataSize() == 0)
 	{
-		printf("Send Data Size is 0\n");
-		return false;
+		if (mSendQueue.empty())
+		{
+			return true;
+		}
+		
+		std::shared_ptr<NetworkPacket> packet;	
+
+		if (false == mSendQueue.try_pop(packet))
+		{
+			printf_s("NetworkClient Send() fail: try_pop Error\n");
+		}
+
+		if (false == mSendContext->Write(*packet))
+		{
+			printf_s("NetworkClient Send() fail: Write Packet Error\n");
+			return false;
+		}
 	}
+
+	printf_s("Sending Packet Data %d\n", mSendContext->GetDataSize());
 
 	mSendContext->ClearOverlapped();
 	mSendContext->mContextType = ContextType::SEND;
@@ -50,17 +67,11 @@ bool NetworkClient::Send(NetworkContext& context)
 
 	if (nRet == SOCKET_ERROR && (ERROR_IO_PENDING != WSAGetLastError()))
 	{
-		printf("WSASend Error : %d\n", WSAGetLastError());
+		printf("NetworkClient Send() fail: WSASend Error: %d\n", WSAGetLastError());
 		return false;
 	}
 
 	return true;
-}
-
-void NetworkClient::SendComplete()
-{
-	mSendContext.reset();
-	mSendContext = nullptr;
 }
 
 std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
@@ -153,10 +164,18 @@ void NetworkClient::Reset()
 
 	if (mSendContext != nullptr)
 	{
-		mSendContext = nullptr;
+		mSendContext->Reset();
 	}
 
 	mIsConnected = false;
 	mSessionID = 0;
+	mSendQueue.clear();
+	mSending.store(false);
+}
+
+void NetworkClient::EnqueuePacket(std::shared_ptr<NetworkPacket> packet)
+{
+	printf_s("EnqueuePacket\n");
+	mSendQueue.push(std::move(packet));
 }
 

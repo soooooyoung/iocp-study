@@ -1,6 +1,8 @@
 #pragma once
 #include "NetworkClient.h"
 
+
+
 class NetworkContext;
 class ListenClient : public NetworkClient
 {

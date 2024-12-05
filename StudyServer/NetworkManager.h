@@ -1,4 +1,5 @@
 #pragma once
+#include "SharedConst.h"
 #include <concurrent_vector.h>
 #include <concurrent_queue.h>
 #include <unordered_map>
@@ -24,6 +25,8 @@ public:
 	void RemoveClient(NetworkClient& client);
 
 	bool RegisterService(int serviceID, std::unique_ptr<Service> service);
+
+	bool PushSendPacket(int sessionID, std::shared_ptr<NetworkPacket> packet);
 private:
 	void WorkerThread();
 

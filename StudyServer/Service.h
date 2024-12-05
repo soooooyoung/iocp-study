@@ -24,5 +24,5 @@ public:
 
 	virtual void ProcessPacket(std::shared_ptr<NetworkPacket> packet);
 
-	std::function<void(int, uint8_t*)> mSendFunction;
+	std::function<void(int, std::shared_ptr<NetworkPacket>)> mSendFunction;
 };

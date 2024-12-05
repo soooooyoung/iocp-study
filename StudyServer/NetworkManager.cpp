@@ -1,10 +1,10 @@
 ﻿#include "pch.h"
-#include "NetworkManager.h"
-#include "NetworkClient.h"
 #include "NetworkContext.h"
-#include "NetworkDispatcher.h"
-#include "ListenClient.h"
+#include "NetworkManager.h"
 #include "Service.h"
+#include "NetworkClient.h"
+#include "ListenClient.h"
+#include "NetworkDispatcher.h"
 
 NetworkManager::NetworkManager() : 
 	mIsRunning(false), 
@@ -141,6 +141,18 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 		return false;
 	}
 
+	auto sendFunction = [this](int sessionID, std::shared_ptr<NetworkPacket> packet)
+		{
+			printf_s("Send Packet to SessionID: %d\n", sessionID);
+			if (false == PushSendPacket(sessionID, std::move(packet)))
+			{
+				printf_s("Send Packet Fail\n");
+			}
+			
+		};
+
+	service->mSendFunction = sendFunction;
+
 	auto dispatcher = std::make_unique<NetworkDispatcher>();
 
 	if (false == dispatcher->Initialize(std::move(service)))
@@ -149,6 +161,42 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 	}
 
 	mServiceList.emplace(serviceID, std::move(dispatcher));
+
+	return true;
+}
+
+bool NetworkManager::PushSendPacket(int sessionID, std::shared_ptr<NetworkPacket> packet)
+{
+	if (sessionID < 0 || sessionID >= mClientList.size())
+	{
+		printf_s("Invalid SessionID\n");
+		return false;
+	}
+
+	auto& client = mClientList.at(sessionID);
+	if (nullptr == client)
+	{
+		printf_s("Invalid Client\n");
+		return false;
+	}
+
+	if (client->IsConnected() == false)
+	{
+		printf_s("Client Disconnected\n");
+		return false;
+	}
+
+	client->EnqueuePacket(std::move(packet));
+
+	// send only if it's not sending
+	if (false == client->mSending.exchange(true))
+	{ 
+		if (false == client->Send())
+		{
+			printf_s("Send Packet Fail\n");
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -354,15 +402,12 @@ void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context,
 
 	if (context.GetDataSize() > 0)
 	{
-		if (false == client.Send(context))
-		{
-			printf_s("_HandleSend Error: Failed to Send\n");
-			return;
-		}
+		client.Send();
 	}
 	else
 	{
-		client.SendComplete();
+		printf_s("Send Complete Data: %d\n", context.GetDataSize());
+		client.mSending.store(false);
 	}
 }
 
@@ -400,7 +445,7 @@ bool NetworkManager::AddClient(std::shared_ptr<NetworkClient> client)
 	}
 
 	// For real world scenario, should use a session manager to assign session id
-	auto sessionID = static_cast<uint32_t>(mClientList.size()) + 1;
+	auto sessionID = static_cast<uint32_t>(mClientList.size());
 	client->SetSessionID(sessionID);
 
 	mClientList.push_back(std::move(client));

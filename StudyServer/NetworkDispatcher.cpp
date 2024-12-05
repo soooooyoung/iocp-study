@@ -1,7 +1,5 @@
 ﻿#include "pch.h"
 #include "NetworkDispatcher.h"
-#include "NetworkClient.h"
-#include "NetworkPacket.h"
 #include "NetworkContext.h"
 #include "Service.h"
 
@@ -34,28 +32,11 @@ bool NetworkDispatcher::Initialize(std::unique_ptr<Service> service, int nRemain
 	return true;
 }
 
-//void NetworkDispatcher::AddSession(std::weak_ptr<NetworkClient> session)
-//{
-//	mSessionList.push_back(session);
-//}
-
 void NetworkDispatcher::PushPacket(std::unique_ptr<NetworkPacket> packet)
 {
 	mPacketQueue.push(std::move(packet));
 }
 
-//void NetworkDispatcher::PushSend(int sessionID, void* data, int size)
-//{
-//	std::shared_ptr<NetworkContext> context = std::make_shared<NetworkContext>();
-//	
-//	if (false == context->Write(data, size))
-//	{
-//		printf_s("PushSend: Write Failed for SessionID: %d\n", sessionID);
-//		return;
-//	}
-//
-//	mSendQueue.push(context);
-//}
 
 void NetworkDispatcher::_DispatchThread()
 {
