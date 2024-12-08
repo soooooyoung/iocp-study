@@ -1,22 +1,22 @@
 #include "pch.h"
-#include "NetworkManager.h"
-#include "NetworkDispatcher.h"
-#include "Service.h"
+#include "Server.h"
+#include "ConfigLoader.h"
 
 int main()
 {
-	NetworkManager networkManager;
-	if (false == networkManager.Initialize())
+	if (false == ConfigLoader::GetInstance().Load())
 	{
 		return -1;
 	}
 
-	while (true)
+	Server server;
+
+	if (false == server.Initialize())
 	{
-		Sleep(1000);
+		return -1;
 	}
 
-	networkManager.Shutdown();
+	server.Run();
 
 	return 0;
 }

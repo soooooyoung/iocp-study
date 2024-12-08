@@ -19,13 +19,20 @@ bool ListenClient::Init()
 	return true;
 }
 
-bool ListenClient::Listen(const int port)
+bool ListenClient::Listen(const int port, const std::string& address)
 {
 	// Configure
 	SOCKADDR_IN serverAddr = {};
-	serverAddr.sin_family = AF_INET;
-	inet_pton(serverAddr.sin_family, "127.0.0.1", &serverAddr.sin_addr);
-	serverAddr.sin_port = htons((unsigned short)port);
+
+	// Set Address
+	if (false == _ResolveAddress(address, serverAddr))
+	{
+		printf_s("Failed to Resolve Address on ListenClient\n");
+		return false;
+	}
+
+	// Set Port
+	serverAddr.sin_port = htons(port);
 
 	// Bind socket
 	if (bind(mSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) != 0)

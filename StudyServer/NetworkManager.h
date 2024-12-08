@@ -2,10 +2,9 @@
 #include "SharedConst.h"
 #include <concurrent_vector.h>
 #include <concurrent_queue.h>
-#include <unordered_map>
-#include <functional>
 
 struct NetworkPacket;
+struct ServerConfig;
 class Service;
 class ListenClient;
 class NetworkClient;
@@ -20,7 +19,7 @@ public:
 	bool Initialize();
 	void Shutdown();
 
-	bool AddListener(int index, int port);
+	bool AddListener(int index, int port, const std::string& address);
 	bool AddClient(std::shared_ptr<NetworkClient> client);
 	void RemoveClient(NetworkClient& client);
 

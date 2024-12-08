@@ -20,6 +20,8 @@
 #include <string>
 #include <cstdint>
 #include <queue>
+#include <unordered_map>
+#include <functional>
 
 #include "SharedEnum.h"
 #include "SharedConst.h"

@@ -1,0 +1,11 @@
+{
+  "server": {
+    "port": 9000,
+    "ip": "127.0.0.1"
+  },
+  "hosts": [],
+  "system": {
+    "thread_per_core": 2,
+    "max_client_count": 1000
+  }
+}

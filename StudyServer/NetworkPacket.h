@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <memory>
 
-
 struct Packet : public std::enable_shared_from_this<Packet>
 {
 	uint32_t BodyLength = 0;

@@ -23,6 +23,15 @@
     <ClCompile Include="pch.cpp">
       <Filter>ServerCore</Filter>
     </ClCompile>
+    <ClCompile Include="JSON.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigLoader.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>ServerCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -33,6 +42,9 @@
     </Filter>
     <Filter Include="Utility">
       <UniqueIdentifier>{04e362c9-9661-47e9-866e-3145494f0d6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{48685314-6bec-4344-bc07-cd6d1ce97cf6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -72,5 +84,19 @@
     <ClInclude Include="Service.h">
       <Filter>ServerCore</Filter>
     </ClInclude>
+    <ClInclude Include="JSON.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigLoader.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>ServerCore</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.json">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
 </Project>

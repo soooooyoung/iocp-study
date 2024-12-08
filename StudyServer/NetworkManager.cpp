@@ -5,13 +5,12 @@
 #include "NetworkClient.h"
 #include "ListenClient.h"
 #include "NetworkDispatcher.h"
+#include "ConfigLoader.h"
 
 NetworkManager::NetworkManager() : 
 	mIsRunning(false), 
 	mIOCPHandle(INVALID_HANDLE_VALUE)
 {
-	mServiceList = std::unordered_map<int, std::shared_ptr<NetworkDispatcher>>();
-	RegisterService(1, std::make_unique<Service>());
 }
 
 NetworkManager::~NetworkManager()
@@ -26,6 +25,8 @@ NetworkManager::~NetworkManager()
 
 bool NetworkManager::Initialize()
 {
+	ServerConfig config = ConfigLoader::GetInstance().GetServerConfig();
+
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -35,7 +36,8 @@ bool NetworkManager::Initialize()
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);
 
-	int ioThreadCount = systemInfo.dwNumberOfProcessors / 2;
+	int ioThreadCount = systemInfo.dwNumberOfProcessors * ConfigLoader::GetInstance().GetSystemConfig().mThreadPerCore;
+
 	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, ioThreadCount);
 
 	if (NULL == mIOCPHandle)
@@ -51,20 +53,19 @@ bool NetworkManager::Initialize()
 		mIOThreadPool.emplace_back([this]() { WorkerThread(); });
 	}
 
-	for (int i = 0; i < MAX_LISTEN_COUNT; ++i)
+	// Add Main Listener
+	if (false == AddListener(0, config.mServerPort, config.mServerAddress))
 	{
-		// FIXME: hardcoded port
-		if (false == AddListener(i, 9000 + i))
-		{
-			return false;
-		}
+		return false;
 	}
+
+	// TODO: Add Sub Listeners
 
 	printf("Server Bind and Listen Success\n");
 	return true;
 }
 
-bool NetworkManager::AddListener(int index, int port)
+bool NetworkManager::AddListener(int index, int port, const std::string& address)
 {
 	std::shared_ptr<ListenClient> listenClient = std::make_shared<ListenClient>();
 
@@ -74,7 +75,7 @@ bool NetworkManager::AddListener(int index, int port)
 		return false;
 	}
 
-	if (false == listenClient->Listen(port))
+	if (false == listenClient->Listen(port, address))
 	{
 		return false;
 	}
@@ -96,6 +97,7 @@ bool NetworkManager::AddListener(int index, int port)
 
 	return true;
 }
+
 
 void NetworkManager::Shutdown()
 {
