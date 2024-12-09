@@ -1,8 +1,7 @@
 # IOCP Study
 
-[![en](https://img.shields.io/badge/lang-en-yellow.svg)](README.md)
-[![kr](https://img.shields.io/badge/lang-kr-red.svg)](README.kr.md)
-
+[![en](https://img.shields.io/badge/lang-english-yellow.svg)](README.md)
+[![kr](https://img.shields.io/badge/lang-한국어-red.svg)](README.kr.md)
 ## Tutorial Branches
 
 These branches follow steps [IOCP Tutorial Repo](https://github.com/jacking75/edu_cpp_IOCP.git) by [jacking75](https://github.com/jacking75) for learning purposes
