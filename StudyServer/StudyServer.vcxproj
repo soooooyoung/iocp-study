@@ -158,6 +158,7 @@
     <ClInclude Include="ConfigLoader.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="ListenClient.h" />
+    <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkDispatcher.h" />

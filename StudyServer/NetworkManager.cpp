@@ -26,6 +26,9 @@ NetworkManager::~NetworkManager()
 bool NetworkManager::Initialize()
 {
 	ServerConfig config = ConfigLoader::GetInstance().GetServerConfig();
+	SystemConfig systemConfig = ConfigLoader::GetInstance().GetSystemConfig();
+	mPacketPool = std::make_shared<MemoryPool<Packet>>(systemConfig.mPacketPoolSize);
+
 
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -36,7 +39,7 @@ bool NetworkManager::Initialize()
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo);
 
-	int ioThreadCount = systemInfo.dwNumberOfProcessors * ConfigLoader::GetInstance().GetSystemConfig().mThreadPerCore;
+	int ioThreadCount = systemInfo.dwNumberOfProcessors * systemConfig.mThreadPerCore;
 
 	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, ioThreadCount);
 
@@ -143,7 +146,7 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 		return false;
 	}
 
-	auto sendFunction = [this](int sessionID, std::shared_ptr<NetworkPacket> packet)
+	auto sendFunction = [this](int sessionID, std::unique_ptr<Packet> packet)
 		{
 			printf_s("Send Packet to SessionID: %d\n", sessionID);
 			if (false == PushSendPacket(sessionID, std::move(packet)))
@@ -167,7 +170,7 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 	return true;
 }
 
-bool NetworkManager::PushSendPacket(int sessionID, std::shared_ptr<NetworkPacket> packet)
+bool NetworkManager::PushSendPacket(int sessionID, std::unique_ptr<Packet> packet)
 {
 	if (sessionID < 0 || sessionID >= mClientList.size())
 	{
@@ -354,7 +357,7 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 	}
 
 	// Packet Deserialization
-	std::unique_ptr<NetworkPacket> packet = client.GetPacket();
+	auto packet = client.GetPacket(mPacketPool);
 
 	if (nullptr == packet)
 	{
@@ -362,7 +365,7 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 		return;
 	}
 
-	packet->Header.SessionID = client.GetSessionID();
+	packet->SessionID = client.GetSessionID();
 
 	if (mServiceList.empty())
 	{

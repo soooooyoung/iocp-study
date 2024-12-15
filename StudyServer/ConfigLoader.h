@@ -23,6 +23,7 @@ struct ServerConfig
 /* System Configuration */
 struct SystemConfig
 {
+	int mPacketPoolSize = 0;
 	int mMaxClientCount = 0;
 	int mThreadPerCore = 0;
 };

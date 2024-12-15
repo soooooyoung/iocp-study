@@ -27,9 +27,7 @@ public:
 	void ResetBuffer();
 	void AlignBuffer();
 
-
 	bool Write(void* data, std::size_t size);
-	bool Write(NetworkPacket& packet);
 	bool Write(int size);
 
 	bool Read(std::span<std::uint8_t> data);

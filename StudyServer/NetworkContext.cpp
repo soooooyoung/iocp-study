@@ -61,21 +61,6 @@ bool NetworkContext::Write(void* data, std::size_t size)
 	return true;
 }
 
-bool NetworkContext::Write(NetworkPacket& packet)
-{
-	if (packet.GetPacketSize() > GetRemainSize())
-	{
-		AlignBuffer();
-		if (packet.GetPacketSize() > GetRemainSize())
-		{
-			return false;
-		}
-	}
-	std::memcpy(mBuffer.data() + mWritePos, &packet, packet.GetPacketSize());
-	mWritePos += packet.GetPacketSize();
-	return true;
-}
-
 
 bool NetworkContext::Write(int size)
 {

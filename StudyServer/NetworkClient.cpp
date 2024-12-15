@@ -31,14 +31,17 @@ bool NetworkClient::Send()
 			return true;
 		}
 		
-		std::shared_ptr<NetworkPacket> packet;	
+		MemoryPool<Packet>::UniquePtr packet;
 
-		if (false == mSendQueue.try_pop(packet))
+		mSendQueue.front().swap(packet);
+
+		if (nullptr == packet)
 		{
-			printf_s("NetworkClient Send() fail: try_pop Error\n");
+			printf_s("NetworkClient Send() fail: Packet is nullptr\n");
+			return false;
 		}
 
-		if (false == mSendContext->Write(*packet))
+		if (false == mSendContext->Write(packet->Body.data(), packet->Body.size()))
 		{
 			printf_s("NetworkClient Send() fail: Write Packet Error\n");
 			return false;
@@ -74,7 +77,7 @@ bool NetworkClient::Send()
 	return true;
 }
 
-std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
+MemoryPool<Packet>::UniquePtr NetworkClient::GetPacket(std::shared_ptr<MemoryPool<Packet>> packetPool)
 {
 	auto remainSize = mReceiveContext->GetDataSize();
 
@@ -87,8 +90,8 @@ std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
 	auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(mReceiveContext->GetReadBuffer());
 	auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
 
-	auto packet = std::make_unique<NetworkPacket>();
-	packet->Header = *packetHeader;
+	NetworkPacket rawPacket;
+	rawPacket.Header = *packetHeader;
 
 	if (remainSize < packetLength)
 	{
@@ -96,10 +99,13 @@ std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
 		return nullptr;
 	}
 
-	memcpy(packet->Body.data(), mReceiveContext->GetReadBuffer() + sizeof(NetworkPacket::PacketHeader), packet->GetBodySize());
+	auto packet = packetPool->Acquire();
+	memcpy(packet->Body.data(), mReceiveContext->GetReadBuffer() + sizeof(NetworkPacket::PacketHeader), rawPacket.GetBodySize());
 
+	packet->PacketID = rawPacket.Header.PacketID;
+	packet->BodyLength = rawPacket.Header.BodyLength;
 
-	if (false == mReceiveContext->Read(packet->GetPacketSize()))
+	if (false == mReceiveContext->Read(rawPacket.GetPacketSize()))
 	{
 		printf("Read Error\n");
 		return nullptr;
@@ -169,11 +175,10 @@ void NetworkClient::Reset()
 
 	mIsConnected = false;
 	mSessionID = 0;
-	mSendQueue.clear();
 	mSending.store(false);
 }
 
-void NetworkClient::EnqueuePacket(std::shared_ptr<NetworkPacket> packet)
+void NetworkClient::EnqueuePacket(std::unique_ptr<Packet> packet)
 {
 	printf_s("EnqueuePacket\n");
 	mSendQueue.push(std::move(packet));

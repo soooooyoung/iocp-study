@@ -32,8 +32,9 @@ bool NetworkDispatcher::Initialize(std::unique_ptr<Service> service, int nRemain
 	return true;
 }
 
-void NetworkDispatcher::PushPacket(std::unique_ptr<NetworkPacket> packet)
+void NetworkDispatcher::PushPacket(MemoryPool<Packet>::UniquePtr packet)
 {
+	std::lock_guard<std::mutex> lock(mMutex);
 	mPacketQueue.push(std::move(packet));
 }
 
@@ -44,61 +45,23 @@ void NetworkDispatcher::_DispatchThread()
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
+		std::lock_guard<std::mutex> lock(mMutex);
+
 		if (mPacketQueue.empty())
 		{
 			continue;
 		}
 
-		std::shared_ptr<NetworkPacket> packet;
 
-		if (false == mPacketQueue.try_pop(packet))
+		MemoryPool<Packet>::UniquePtr packet = nullptr;
+		mPacketQueue.front().swap(packet);
+
+		if (packet == nullptr)
 		{
 			continue;
 		}
-
+		
 		printf_s("Received Body: %s\n", packet->Body.data());
 		mService->ProcessPacket(std::move(packet));
 	}
 }
-
-//void NetworkDispatcher::SendThread()
-//{
-//	while (mIsRunning)
-//	{
-//		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//
-//		if (mSendQueue.empty())
-//		{
-//			continue;
-//		}
-//
-//		std::shared_ptr<NetworkContext> context = nullptr;
-//
-//		if (false == mSendQueue.try_pop(context))
-//		{
-//			continue;
-//		}
-//
-//		if (context->mSessionID < 0 || context->mSessionID >= mSessionList.size())
-//		{
-//			printf_s("SendThread: Invalid SessionID: %d\n", context->mSessionID);
-//			continue;
-//		}
-//
-//		auto client = mSessionList.at(context->mSessionID).lock();
-//
-//		if (false == client->IsConnected())
-//		{
-//			printf_s("SendThread: Client Disconnected: %d\n", context->mSessionID);
-//			continue;
-//		}
-//
-//		if (false == client->Send(*context))
-//		{
-//			printf_s("SendThread: Send Failed: %d\n", context->mSessionID);
-//			continue;
-//		}
-//
-//		printf_s("SendThread: Send Success: %d\n", context->mSessionID);
-//	}
-//}

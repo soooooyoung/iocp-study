@@ -12,4 +12,5 @@ enum class ServiceProtocol
 {
 	NONE,
 	ECHO,
+	LOGIN,
 };

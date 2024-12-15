@@ -6,6 +6,7 @@
   "hosts": [],
   "system": {
     "thread_per_core": 2,
-    "max_client_count": 1000
+    "max_client_count": 1000,
+    "packet_pool_size": 1000
   }
 }

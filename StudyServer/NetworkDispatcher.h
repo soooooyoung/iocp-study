@@ -1,10 +1,12 @@
 #pragma once
-#include <concurrent_queue.h>
-#include <concurrent_vector.h>
 #include <memory>
 #include <thread>
-#include <vector>
+#include <queue>
+#include <mutex>
 
+#include "MemoryPool.h"
+
+struct Packet;
 struct NetworkPacket;
 class NetworkContext;
 class Service;
@@ -15,13 +17,15 @@ public:
 	virtual ~NetworkDispatcher();
 
 	bool Initialize(std::unique_ptr<Service> service, int nRemainThread = 1);
-	void PushPacket(std::unique_ptr<NetworkPacket> packet);
+	void PushPacket(MemoryPool<Packet>::UniquePtr packet);
 private:
 	void _DispatchThread();
 	std::thread mDispatchThread;
 
 	std::unique_ptr<Service> mService;
-	concurrency::concurrent_queue<std::shared_ptr<NetworkPacket>> mPacketQueue;
+
+	std::mutex mMutex;
+	std::queue<MemoryPool<Packet>::UniquePtr> mPacketQueue;
 
 	bool mIsRunning = false;
 };

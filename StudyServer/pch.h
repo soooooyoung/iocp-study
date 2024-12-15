@@ -26,3 +26,4 @@
 #include "SharedEnum.h"
 #include "SharedConst.h"
 #include "NetworkPacket.h"
+#include "MemoryPool.h"

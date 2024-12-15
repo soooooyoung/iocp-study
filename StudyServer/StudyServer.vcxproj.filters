@@ -93,6 +93,9 @@
     <ClInclude Include="Server.h">
       <Filter>ServerCore</Filter>
     </ClInclude>
+    <ClInclude Include="MemoryPool.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">

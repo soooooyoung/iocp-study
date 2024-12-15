@@ -5,16 +5,18 @@
 #include <functional>
 
 #include "SharedEnum.h"
+#include "MemoryPool.h"
 
+struct Packet;
 struct NetworkPacket;
 class Service
 {
 private:
-	typedef void(Service::* PacketFunction)(const NetworkPacket&);
+	typedef void(Service::* PacketFunction)(const Packet&);
 	std::unordered_map<int, PacketFunction> mPacketHandler;
 
 protected:
-	virtual void Echo(const NetworkPacket& packet);
+	virtual void Echo(const Packet& packet);
 
 public:
 	Service();
@@ -22,7 +24,7 @@ public:
 
 	void RegisterPacketHandler(ServiceProtocol packetID, const PacketFunction& handler);
 
-	virtual void ProcessPacket(std::shared_ptr<NetworkPacket> packet);
+	virtual void ProcessPacket(MemoryPool<Packet>::UniquePtr packet);
 
-	std::function<void(int, std::shared_ptr<NetworkPacket>)> mSendFunction;
+	std::function<void(int, std::unique_ptr<Packet>)> mSendFunction;
 };

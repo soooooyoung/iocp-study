@@ -1,7 +1,8 @@
 #pragma once
-#include <concurrent_queue.h>
+#include <queue>
 #include <atomic>
 #include <memory>
+
 #include "NetworkPacket.h"
 
 class NetworkContext;
@@ -24,12 +25,12 @@ public:
 	virtual void Close(bool bIsForce = false);
 	virtual void Reset();
 
-	void EnqueuePacket(std::shared_ptr<NetworkPacket> packet);
+	void EnqueuePacket(std::unique_ptr<Packet> packet);
 
 	bool Receive();
 	bool Send();
 
-	std::unique_ptr<NetworkPacket> GetPacket();
+	MemoryPool<Packet>::UniquePtr GetPacket(std::shared_ptr<MemoryPool<Packet>> packetPool);
 
 	std::atomic<bool> mSending = true;
 protected:
@@ -42,6 +43,5 @@ protected:
 	std::unique_ptr<NetworkContext> mReceiveContext;
 	std::unique_ptr<NetworkContext> mSendContext;
 
-	concurrency::concurrent_queue<std::shared_ptr<NetworkPacket>> mSendQueue;
-
+	std::queue<MemoryPool<Packet>::UniquePtr> mSendQueue;
 };

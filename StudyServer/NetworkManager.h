@@ -4,6 +4,7 @@
 #include <concurrent_queue.h>
 
 struct NetworkPacket;
+struct Packet;
 struct ServerConfig;
 class Service;
 class ListenClient;
@@ -25,7 +26,7 @@ public:
 
 	bool RegisterService(int serviceID, std::unique_ptr<Service> service);
 
-	bool PushSendPacket(int sessionID, std::shared_ptr<NetworkPacket> packet);
+	bool PushSendPacket(int sessionID, std::unique_ptr<Packet> packet);
 private:
 	void WorkerThread();
 
@@ -45,4 +46,6 @@ private:
 	concurrency::concurrent_queue<std::shared_ptr<NetworkClient>> mClientPool;
 
 	std::unordered_map<int, std::shared_ptr<NetworkDispatcher>> mServiceList;
+
+	std::shared_ptr<MemoryPool<Packet>> mPacketPool;
 };

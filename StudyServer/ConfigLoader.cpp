@@ -28,6 +28,7 @@ bool ConfigLoader::Load()
 
 	mSystemConfig.mThreadPerCore = system.value<int>("thread_per_core", 1);
 	mSystemConfig.mMaxClientCount = system.value<int>("max_client_count", 1);
+	mSystemConfig.mPacketPoolSize = system.value<int>("packet_pool_size", 10);
 
 	auto& server = config["server"];
 
