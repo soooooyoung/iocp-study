@@ -26,7 +26,7 @@ public:
 
 	bool RegisterService(int serviceID, std::unique_ptr<Service> service);
 
-	bool PushSendPacket(int sessionID, std::unique_ptr<Packet> packet);
+	bool PushSendPacket(int sessionID, MemoryPool<Packet>::UniquePtr packet);
 private:
 	void WorkerThread();
 

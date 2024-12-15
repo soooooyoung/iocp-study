@@ -14,6 +14,7 @@ bool NetworkClient::Init()
 	Reset();
 	mLastCloseTimeInSeconds = UINT32_MAX;
 	mIsConnected = true;
+
 	return true;
 }
 
@@ -31,9 +32,8 @@ bool NetworkClient::Send()
 			return true;
 		}
 		
-		MemoryPool<Packet>::UniquePtr packet;
-
-		mSendQueue.front().swap(packet);
+		MemoryPool<Packet>::UniquePtr packet(
+			std::move(mSendQueue.front()));
 
 		if (nullptr == packet)
 		{
@@ -41,7 +41,9 @@ bool NetworkClient::Send()
 			return false;
 		}
 
-		if (false == mSendContext->Write(packet->Body.data(), packet->Body.size()))
+		auto rawPacket = SetPacket(*packet);
+
+		if (false == mSendContext->Write(&rawPacket, rawPacket.GetPacketSize()))
 		{
 			printf_s("NetworkClient Send() fail: Write Packet Error\n");
 			return false;
@@ -114,6 +116,16 @@ MemoryPool<Packet>::UniquePtr NetworkClient::GetPacket(std::shared_ptr<MemoryPoo
 	return packet;
 }
 
+NetworkPacket NetworkClient::SetPacket(const Packet& packet)
+{
+	NetworkPacket rawPacket;
+	rawPacket.Header.BodyLength = packet.BodyLength;
+	rawPacket.Header.PacketID = packet.PacketID;
+	rawPacket.Header.SessionID = packet.SessionID;
+	memcpy(rawPacket.Body.data(), packet.Body.data(), packet.BodyLength);
+	return rawPacket;
+}
+
 bool NetworkClient::Receive()
 {
 	DWORD dwFlag = 0;
@@ -178,7 +190,7 @@ void NetworkClient::Reset()
 	mSending.store(false);
 }
 
-void NetworkClient::EnqueuePacket(std::unique_ptr<Packet> packet)
+void NetworkClient::EnqueuePacket(MemoryPool<Packet>::UniquePtr packet)
 {
 	printf_s("EnqueuePacket\n");
 	mSendQueue.push(std::move(packet));

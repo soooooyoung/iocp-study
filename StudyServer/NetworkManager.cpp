@@ -146,10 +146,18 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 		return false;
 	}
 
-	auto sendFunction = [this](int sessionID, std::unique_ptr<Packet> packet)
+	auto sendFunction = [this](int sessionID,const Packet& packet)
 		{
-			printf_s("Send Packet to SessionID: %d\n", sessionID);
-			if (false == PushSendPacket(sessionID, std::move(packet)))
+			auto pooledPacket = mPacketPool->Acquire();
+			if (nullptr == pooledPacket)
+			{
+				printf_s("Send Packet Fail\n");
+				return;
+			}
+
+			*pooledPacket = packet;
+
+			if (false == PushSendPacket(sessionID, std::move(pooledPacket)))
 			{
 				printf_s("Send Packet Fail\n");
 			}
@@ -170,7 +178,7 @@ bool NetworkManager::RegisterService(int serviceID, std::unique_ptr<Service> ser
 	return true;
 }
 
-bool NetworkManager::PushSendPacket(int sessionID, std::unique_ptr<Packet> packet)
+bool NetworkManager::PushSendPacket(int sessionID, MemoryPool<Packet>::UniquePtr packet)
 {
 	if (sessionID < 0 || sessionID >= mClientList.size())
 	{

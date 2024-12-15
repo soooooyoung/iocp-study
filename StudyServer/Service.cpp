@@ -40,8 +40,10 @@ void Service::Echo(const Packet& packet)
 	Packet response;
 	response.PacketID = static_cast<int>(ServiceProtocol::ECHO);
 	response.BodyLength = packet.BodyLength;
+	response.SessionID = packet.SessionID;
+
 	memcpy(response.Body.data(), packet.Body.data(), packet.BodyLength);
 
-	mSendFunction(packet.SessionID, std::make_unique<Packet>(response));
+	mSendFunction(packet.SessionID, response);
 }
 

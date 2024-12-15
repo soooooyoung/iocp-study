@@ -26,5 +26,5 @@ public:
 
 	virtual void ProcessPacket(MemoryPool<Packet>::UniquePtr packet);
 
-	std::function<void(int, std::unique_ptr<Packet>)> mSendFunction;
+	std::function<void(int, const Packet&)> mSendFunction;
 };

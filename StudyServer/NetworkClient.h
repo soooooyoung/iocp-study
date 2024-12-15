@@ -25,12 +25,13 @@ public:
 	virtual void Close(bool bIsForce = false);
 	virtual void Reset();
 
-	void EnqueuePacket(std::unique_ptr<Packet> packet);
+	void EnqueuePacket(MemoryPool<Packet>::UniquePtr packet);
 
 	bool Receive();
 	bool Send();
 
 	MemoryPool<Packet>::UniquePtr GetPacket(std::shared_ptr<MemoryPool<Packet>> packetPool);
+	NetworkPacket SetPacket(const Packet& packet);
 
 	std::atomic<bool> mSending = true;
 protected:

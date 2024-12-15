@@ -165,8 +165,6 @@
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkPacket.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="SecureQueue.h" />
-    <ClInclude Include="SecurePool.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Service.h" />
     <ClInclude Include="SharedConst.h" />
