@@ -19,9 +19,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
 
         if (pool_.empty()) {
-			return std::unique_ptr<T, std::function<void(T*)>>(new T(), [this](T* ptr) {
-				this->Release(ptr);
-				});
+            pool_.push_back(std::make_unique<T>());
         }
 
         auto obj = std::move(pool_.back());

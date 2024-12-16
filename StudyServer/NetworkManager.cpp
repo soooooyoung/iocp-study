@@ -419,7 +419,6 @@ void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context,
 	}
 	else
 	{
-		printf_s("Send Complete Data: %d\n", context.GetDataSize());
 		client.mSending.store(false);
 	}
 }

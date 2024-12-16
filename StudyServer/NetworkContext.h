@@ -1,6 +1,5 @@
 #pragma once
 
-struct NetworkPacket;
 class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
 {
 private:

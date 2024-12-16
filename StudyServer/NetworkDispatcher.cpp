@@ -63,5 +63,7 @@ void NetworkDispatcher::_DispatchThread()
 		
 		printf_s("Received Body: %s\n", packet->Body.data());
 		mService->ProcessPacket(std::move(packet));
+
+		mPacketQueue.pop();
 	}
 }

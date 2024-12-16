@@ -32,22 +32,15 @@ bool NetworkClient::Send()
 			return true;
 		}
 		
-		MemoryPool<Packet>::UniquePtr packet(
-			std::move(mSendQueue.front()));
-
-		if (nullptr == packet)
-		{
-			printf_s("NetworkClient Send() fail: Packet is nullptr\n");
-			return false;
-		}
-
-		auto rawPacket = SetPacket(*packet);
+		auto rawPacket = SetPacket(*(mSendQueue.front()));
 
 		if (false == mSendContext->Write(&rawPacket, rawPacket.GetPacketSize()))
 		{
 			printf_s("NetworkClient Send() fail: Write Packet Error\n");
 			return false;
 		}
+
+		mSendQueue.pop();
 	}
 
 	printf_s("Sending Packet Data %d\n", mSendContext->GetDataSize());
