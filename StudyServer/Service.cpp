@@ -16,9 +16,9 @@ void Service::RegisterPacketHandler(ServiceProtocol packetID, const PacketFuncti
 	mPacketHandler.emplace(static_cast<int>(packetID), handler);
 }
 
-void Service::ProcessPacket(MemoryPool<Packet>::UniquePtr packet)
+void Service::ProcessPacket(const Packet& packet)
 {
-	auto packetID = packet->PacketID;
+	auto packetID = packet.PacketID;
 
 	auto iter = mPacketHandler.find(packetID);
 	if (iter == mPacketHandler.end())
@@ -28,9 +28,7 @@ void Service::ProcessPacket(MemoryPool<Packet>::UniquePtr packet)
 	}
 
 	auto func = iter->second;
-	(this->*func)(*packet);
-
-	packet.reset();
+	(this->*func)(packet);
 }
 
 void Service::Echo(const Packet& packet)

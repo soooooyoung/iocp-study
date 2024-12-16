@@ -43,8 +43,6 @@ bool NetworkClient::Send()
 		mSendQueue.pop();
 	}
 
-	printf_s("Sending Packet Data %d\n", mSendContext->GetDataSize());
-
 	mSendContext->ClearOverlapped();
 	mSendContext->mContextType = ContextType::SEND;
 	mSendContext->mSessionID = mSessionID;
@@ -185,7 +183,6 @@ void NetworkClient::Reset()
 
 void NetworkClient::EnqueuePacket(MemoryPool<Packet>::UniquePtr packet)
 {
-	printf_s("EnqueuePacket\n");
 	mSendQueue.push(std::move(packet));
 }
 

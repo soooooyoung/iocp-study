@@ -1,20 +1,19 @@
 #pragma once
 #include <memory>
-#include <concurrent_queue.h>
+#include <concurrent_vector.h>
 #include <unordered_map>
 #include <functional>
+
 
 #include "SharedEnum.h"
 #include "MemoryPool.h"
 
 struct Packet;
-struct NetworkPacket;
 class Service
 {
 private:
 	typedef void(Service::* PacketFunction)(const Packet&);
 	std::unordered_map<int, PacketFunction> mPacketHandler;
-
 protected:
 	virtual void Echo(const Packet& packet);
 
@@ -24,7 +23,7 @@ public:
 
 	void RegisterPacketHandler(ServiceProtocol packetID, const PacketFunction& handler);
 
-	virtual void ProcessPacket(MemoryPool<Packet>::UniquePtr packet);
+	virtual void ProcessPacket(const Packet& packet);
 
 	std::function<void(int, const Packet&)> mSendFunction;
 };

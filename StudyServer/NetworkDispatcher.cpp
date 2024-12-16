@@ -52,17 +52,7 @@ void NetworkDispatcher::_DispatchThread()
 			continue;
 		}
 
-
-		MemoryPool<Packet>::UniquePtr packet = nullptr;
-		mPacketQueue.front().swap(packet);
-
-		if (packet == nullptr)
-		{
-			continue;
-		}
-		
-		printf_s("Received Body: %s\n", packet->Body.data());
-		mService->ProcessPacket(std::move(packet));
+		mService->ProcessPacket(*(mPacketQueue.front()));
 
 		mPacketQueue.pop();
 	}
