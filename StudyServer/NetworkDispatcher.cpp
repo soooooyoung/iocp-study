@@ -45,15 +45,23 @@ void NetworkDispatcher::_DispatchThread()
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-		std::lock_guard<std::mutex> lock(mMutex);
-
-		if (mPacketQueue.empty())
+		// Swap the packet queue
 		{
-			continue;
+			std::lock_guard<std::mutex> lock(mMutex);
+
+			if (mPacketQueue.empty())
+			{
+				continue;
+			}
+
+			mWorkQueue.swap(mPacketQueue);
 		}
 
-		mService->ProcessPacket(*(mPacketQueue.front()));
-
-		mPacketQueue.pop();
+		// Process the packet
+		for (int i = 0; i < mWorkQueue.size(); ++i)
+		{
+			mService->ProcessPacket(*(mWorkQueue.front()));
+			mWorkQueue.pop();
+		}
 	}
 }

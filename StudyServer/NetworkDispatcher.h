@@ -26,6 +26,7 @@ private:
 
 	std::mutex mMutex;
 	std::queue<MemoryPool<Packet>::UniquePtr> mPacketQueue;
+	std::queue<MemoryPool<Packet>::UniquePtr> mWorkQueue;
 
 	bool mIsRunning = false;
 };
