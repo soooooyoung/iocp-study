@@ -2,6 +2,7 @@
 
 [![en](https://img.shields.io/badge/lang-english-yellow.svg)](README.md)
 [![kr](https://img.shields.io/badge/lang-한국어-red.svg)](README.kr.md)
+
 ## Tutorial Branches
 
 These branches follow steps [IOCP Tutorial Repo](https://github.com/jacking75/edu_cpp_IOCP.git) by [jacking75](https://github.com/jacking75) for learning purposes
@@ -136,3 +137,62 @@ This eliminates the need to load the same data into cache again if it were passe
 For high-frequency, small packets, this approach improves overall throughput by avoiding the overhead of transferring data to another thread. However, larger packets, which may require more complex processing, could risk overloading the IOCP thread.
 
 Once the packet is fully deserialized, it is forwarded to the NetworkDispatcher for routing to the application layer.
+
+### Packet Queue Management
+
+Packets pushed to NetworkDispatcher are directly processed from packet queue within the critical section. This approach introduced potential performance bottlenecks as the mutex remained locked during packet processing, blocking IOCP threads from accessing mPacketQueue.
+
+To address this, the queue management logic was updated to introduce a secondary work queue that temporarily holds the packets for processing outside the critical section.
+
+#### Initial Implementation:
+
+```cpp
+void NetworkDispatcher::_DispatchThread()
+{
+    while (mIsRunning)
+    {
+		std::lock_guard<std::mutex> lock(mMutex);
+
+		if (mPacketQueue.empty())
+		{
+			continue;
+		}
+
+
+		mService->ProcessPacket(*(mPacketQueue.front()));
+		mPacketQueue.pop();
+    }
+}
+```
+
+#### Revised Implementation:
+
+```cpp
+void NetworkDispatcher::_DispatchThread()
+{
+    while (mIsRunning)
+    {
+        // Swap the packet queue
+        {
+            std::lock_guard<std::mutex> lock(mMutex);
+
+            if (mPacketQueue.empty())
+            {
+                continue;
+            }
+
+            mWorkQueue.swap(mPacketQueue);  // Safely transfer packets
+        }
+
+        // Process the packets
+        for (int i = 0; i < mWorkQueue.size(); ++i)
+        {
+            mService->ProcessPacket(*(mWorkQueue.front()));
+            mWorkQueue.pop();
+        }
+    }
+}
+
+```
+
+The mutex is held only during the swap operation, reducing contention and allowing IOCP threads to enqueue packets without waiting.

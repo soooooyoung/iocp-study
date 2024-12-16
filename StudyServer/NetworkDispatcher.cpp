@@ -43,8 +43,6 @@ void NetworkDispatcher::_DispatchThread()
 {
 	while (mIsRunning)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
 		// Swap the packet queue
 		{
 			std::lock_guard<std::mutex> lock(mMutex);
