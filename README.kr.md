@@ -124,3 +124,61 @@ IOCP Thread에서 raw 데이터를 직접 처리하면 I/O 작업으로 인해 �
 고빈도, 소규모 패킷 처리에서는 데이터를 다른 스레드로 전달하는 오버헤드를 방지함으로써 전반적인 처리량(throughput)을 향상시킬 수 있습니다. 더 큰 패킷의 경우 복잡한 처리가 필요할 수 있어 IOCP 스레드가 과부하될 위험이 있습니다.
 
 변환이 완료된 패킷인 이후 `NetworkDispatcher`에 전달되어 애플리케이션 계층 서비스로 라우팅 됩니다.
+
+### 패킷 큐 이벤트 관리
+
+패킷을 NetworkDispatcher에 푸시하면, 락을 걸고 패킷을 큐로부터 직접 하나씩 처리하였습니다. 이 방식은 패킷 처리 동안 IOCP 스레드들이 패킷 큐에 추가 패킷을 추가하는 것을 막아 성능적인 우려가 있었습니다.
+
+이 문제를 해결하기 위해, 임계 구역 밖에서 패킷을 처리할 수 있도록 임시로 패킷을 보관하는 보조 작업 큐(work queue)를 도입하는 방식으로 큐 관리 로직을 개선했습니다.
+
+#### 초기 구현:
+
+```cpp
+void NetworkDispatcher::_DispatchThread()
+{
+    while (mIsRunning)
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+
+        if (mPacketQueue.empty())
+        {
+            continue;
+        }
+
+        mService->ProcessPacket(*(mPacketQueue.front()));
+        mPacketQueue.pop();
+    }
+}
+```
+
+#### 개선된 구현:
+
+```csharp
+void NetworkDispatcher::_DispatchThread()
+{
+    while (mIsRunning)
+    {
+        // 패킷 큐 스와핑
+        {
+            std::lock_guard<std::mutex> lock(mMutex);
+
+            if (mPacketQueue.empty())
+            {
+                continue;
+            }
+
+            mWorkQueue.swap(mPacketQueue);  // 패킷을 안전하게 이동
+        }
+
+        // 패킷 처리
+        for (int i = 0; i < mWorkQueue.size(); ++i)
+        {
+            mService->ProcessPacket(*(mWorkQueue.front()));
+            mWorkQueue.pop();
+        }
+    }
+}
+
+```
+
+이렇게 하면 뮤텍스는 스와핑 동작 중에만 잠기므로, 경합을 줄이고 IOCP 스레드가 대기 없이 패킷을 큐에 추가할 수 있게 됩니다.
