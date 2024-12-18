@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Network">
+      <UniqueIdentifier>{11a27282-bb53-4706-8529-7c16644450ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Socket">
+      <UniqueIdentifier>{ddf09e90-80a0-492b-884b-0a7a113d1eb5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ClientSocket.h">
+      <Filter>Network\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="HostSocket.h">
+      <Filter>Network\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkSocket.h">
+      <Filter>Network\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkContext.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ClientSocket.cpp">
+      <Filter>Network\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="HostSocket.cpp">
+      <Filter>Network\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkSocket.cpp">
+      <Filter>Network\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
