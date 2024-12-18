@@ -11,13 +11,16 @@ namespace NetworkLib {
 	{
 	}
 
-	void HostSocket::CreateSocket()
+	bool HostSocket::CreateSocket()
 	{
 		mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSA_FLAG_OVERLAPPED);
 		if (mSocket == INVALID_SOCKET)
 		{
 			printf_s("socket() Error: %d\n", WSAGetLastError());
+			return false;
 		}
+
+		return true;
 	}
 
 	bool HostSocket::Bind(const std::string& address, const uint16_t port)

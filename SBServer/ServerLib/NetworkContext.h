@@ -22,7 +22,7 @@ namespace NetworkLib
 		NetworkContext();
 		virtual ~NetworkContext();
 
-		virtual void OnComplete(const DWORD transferred, const DWORD error) = 0;
+		virtual void OnComplete(const DWORD transferred, const DWORD error);
 
 		void SetBuffer(char* buffer);
 		char* GetBuffer();

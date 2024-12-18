@@ -21,12 +21,15 @@
   <ItemGroup>
     <ClInclude Include="ClientSocket.h" />
     <ClInclude Include="HostSocket.h" />
+    <ClInclude Include="IOCPHandler.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkSocket.h" />
+    <ClInclude Include="ServerConfig.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="HostSocket.cpp" />
+    <ClCompile Include="IOCPHandler.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
     <ClCompile Include="NetworkSocket.cpp" />
   </ItemGroup>

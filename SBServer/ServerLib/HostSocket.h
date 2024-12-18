@@ -1,11 +1,12 @@
 #pragma once
+#include <memory>
 
 #include "NetworkSocket.h"
 
 namespace NetworkLib
 {
 	class NetworkContext;
-	class HostSocket : public NetworkSocket
+	class HostSocket : public NetworkSocket, public std::enable_shared_from_this<HostSocket>
 	{
 	public:
 		HostSocket();
@@ -17,7 +18,7 @@ namespace NetworkLib
 		SOCKET Accept();
 		bool PostAccept(SOCKET& socket, NetworkContext* context);
 
-		void CreateSocket();
+		bool CreateSocket();
 	private:
 		SOCKADDR_IN _ResolveAddress(const std::string& address);
 	};

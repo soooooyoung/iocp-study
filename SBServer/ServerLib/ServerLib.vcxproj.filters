@@ -7,6 +7,9 @@
     <Filter Include="Network\Socket">
       <UniqueIdentifier>{ddf09e90-80a0-492b-884b-0a7a113d1eb5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{663c56da-e09a-4ac2-af7e-f668834a627e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientSocket.h">
@@ -21,6 +24,12 @@
     <ClInclude Include="NetworkContext.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="IOCPHandler.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerConfig.h">
+      <Filter>Config</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp">
@@ -33,6 +42,9 @@
       <Filter>Network\Socket</Filter>
     </ClCompile>
     <ClCompile Include="NetworkContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPHandler.cpp">
       <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>

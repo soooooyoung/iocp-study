@@ -21,6 +21,8 @@ namespace NetworkLib
 		bool SetSocketNonBlocking(const SOCKET& socket);
 		bool SetSocketNoDelay(const SOCKET& socket);
 
+		SOCKET GetSocket() const { return mSocket; }
+
 	protected:
 		SOCKET mSocket = INVALID_SOCKET;
 	};

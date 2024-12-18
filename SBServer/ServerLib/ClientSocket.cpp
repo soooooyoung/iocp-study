@@ -3,11 +3,25 @@
 
 namespace NetworkLib
 {
-	ClientSocket::ClientSocket()
+	bool ClientSocket::OnConnect()
 	{
-	}
-	ClientSocket::~ClientSocket()
-	{
+		if (mSocket == INVALID_SOCKET)
+		{
+			return false;
+		}
+
+		if (false == SetSocketNonBlocking(mSocket))
+		{
+			return false;
+		}
+
+		if (false == SetSocketNoDelay(mSocket))
+		{
+			return false;
+		}
+
+		mIsConnected = true;
+		return true;
 	}
 
 	bool ClientSocket::Send(NetworkContext* context)
@@ -76,25 +90,6 @@ namespace NetworkLib
 		mSocket = INVALID_SOCKET;
 	}
 
-	bool ClientSocket::SetSocketOptions()
-	{
-		if (false == SetSocketReusable(mSocket))
-		{
-			return false;
-		}
-
-		if (false == SetSocketNonBlocking(mSocket))
-		{
-			return false;
-		}
-
-		if (false == SetSocketNoDelay(mSocket))
-		{
-			return false;
-		}
-
-		return true;
-	}
 
 	void ClientSocket::SetSocket(SOCKET& socket)
 	{
