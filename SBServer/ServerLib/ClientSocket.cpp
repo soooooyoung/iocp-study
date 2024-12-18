@@ -3,6 +3,11 @@
 
 namespace NetworkLib
 {
+	ClientSocket::~ClientSocket()
+	{
+		Close();
+	}
+
 	bool ClientSocket::OnConnect()
 	{
 		if (mSocket == INVALID_SOCKET)
@@ -88,11 +93,5 @@ namespace NetworkLib
 		closesocket(mSocket);
 
 		mSocket = INVALID_SOCKET;
-	}
-
-
-	void ClientSocket::SetSocket(SOCKET& socket)
-	{
-		mSocket = socket;
 	}
 }

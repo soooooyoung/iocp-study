@@ -19,6 +19,8 @@ namespace NetworkLib
 		bool PostAccept(SOCKET& socket, NetworkContext* context);
 
 		bool CreateSocket();
+
+		void Close();
 	private:
 		SOCKADDR_IN _ResolveAddress(const std::string& address);
 	};

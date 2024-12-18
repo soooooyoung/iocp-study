@@ -11,6 +11,19 @@ namespace NetworkLib
 
 	IOCPHandler::~IOCPHandler()
 	{
+		mIsRunning = false;
+
+		for (auto& host : mHostSockets)
+		{
+			host->Close();
+		}
+
+		for (auto& thread : mIOThreadPool)
+		{
+			thread.join();
+		}
+
+		CloseHandle(mIOCPHandle);
 	}
 
 	bool IOCPHandler::Initialize(const ServerConfig& config)

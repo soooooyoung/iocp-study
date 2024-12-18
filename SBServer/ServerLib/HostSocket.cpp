@@ -9,6 +9,7 @@ namespace NetworkLib {
 
 	HostSocket::~HostSocket()
 	{
+		Close();
 	}
 
 	bool HostSocket::CreateSocket()
