@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "IOCPHandler.h"
 #include "HostSocket.h"
 #include "ClientSocket.h"
@@ -26,7 +27,7 @@ namespace NetworkLib
 		CloseHandle(mIOCPHandle);
 	}
 
-	bool IOCPHandler::Initialize(const ServerConfig& config)
+	bool IOCPHandler::Initialize(const NetworkConfig& config)
 	{
 		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);

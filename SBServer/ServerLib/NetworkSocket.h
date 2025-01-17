@@ -1,13 +1,6 @@
-﻿#pragma once
+﻿#pragma once 
 
-#include <string>
-#include <cstdint>
-
-#pragma comment(lib, "ws2_32")
-
-#include <WinSock2.h>
-#include <ws2tcpip.h>
-#include <mswsock.h>    
+#include "stdint.h"
 
 namespace NetworkLib
 {

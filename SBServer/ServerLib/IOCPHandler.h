@@ -4,18 +4,19 @@
 #include <thread>
 #include <memory>
 
-#include "ServerConfig.h"
+#include "NetworkConfig.h"
 
 namespace NetworkLib
 {
 	class HostSocket;
+	class NetworkContext;
 	class IOCPHandler
 	{
 	public:
 		IOCPHandler();
 		virtual ~IOCPHandler();
 
-		bool Initialize(const ServerConfig& config);
+		bool Initialize(const NetworkConfig& config);
 		std::shared_ptr<HostSocket> AddHost(const std::string& address, const uint16_t port);
 
 		bool Register(const SOCKET& socket);

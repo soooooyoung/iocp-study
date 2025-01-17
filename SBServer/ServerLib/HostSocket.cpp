@@ -1,4 +1,5 @@
-﻿#include "HostSocket.h"
+﻿#include "pch.h"
+#include "HostSocket.h"
 #include "NetworkContext.h"
 
 namespace NetworkLib {
@@ -22,6 +23,16 @@ namespace NetworkLib {
 		}
 
 		return true;
+	}
+
+	void HostSocket::Close() noexcept
+	{
+		if (mSocket != INVALID_SOCKET)
+		{
+			::shutdown(mSocket, SD_BOTH);
+			::closesocket(mSocket);
+			mSocket = INVALID_SOCKET;
+		}
 	}
 
 	bool HostSocket::Bind(const std::string& address, const uint16_t port)

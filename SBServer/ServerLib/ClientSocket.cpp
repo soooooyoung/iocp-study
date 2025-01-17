@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "ClientSocket.h"
 #include "NetworkContext.h"
 
@@ -40,8 +41,8 @@ namespace NetworkLib
 		DWORD flags = 0;
 		WSABUF wsaBuf = {};
 
-		wsaBuf.buf = context->GetBuffer();
-		wsaBuf.len = context->GetSize();
+		wsaBuf.buf = (char*)context->GetBuffer()->GetReadBuffer();
+		wsaBuf.len = context->GetBuffer()->GetDataSize();
 
 		int result = WSASend(mSocket, &wsaBuf, 1, &sendBytes, flags, (LPWSAOVERLAPPED)context, nullptr);
 
@@ -68,8 +69,8 @@ namespace NetworkLib
 		DWORD flags = 0;
 		WSABUF wsaBuf = {};
 
-		wsaBuf.buf = context->GetBuffer();
-		wsaBuf.len = context->GetSize();
+		wsaBuf.buf = (char*)context->GetBuffer()->GetWriteBuffer();
+		wsaBuf.len = context->GetBuffer()->GetRemainSize();
 
 		int result = WSARecv(mSocket, &wsaBuf, 1, &recvBytes, &flags, (LPWSAOVERLAPPED)context, nullptr);
 		if (result == SOCKET_ERROR)

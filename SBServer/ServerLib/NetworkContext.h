@@ -26,7 +26,7 @@ namespace NetworkLib
 		NetworkContext() { }
 		virtual ~NetworkContext() { Reset(); }
 
-		Buffer GetBuffer() { return mBuffer; }
+		Buffer* GetBuffer() { return &mBuffer; }
 
 		void SetContextType(const ContextType contextType) { mContextType = contextType; }
 		ContextType GetContextType() const { return mContextType; }

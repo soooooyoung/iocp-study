@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <string>
 
 #include "NetworkSocket.h"
 
@@ -20,7 +21,7 @@ namespace NetworkLib
 
 		bool CreateSocket();
 
-		void Close();
+		void Close() noexcept;
 	private:
 		SOCKADDR_IN _ResolveAddress(const std::string& address);
 	};

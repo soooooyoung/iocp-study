@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "NetworkSocket.h"
 
 namespace NetworkLib
