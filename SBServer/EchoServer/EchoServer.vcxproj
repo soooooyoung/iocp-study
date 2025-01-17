@@ -136,6 +136,8 @@
   <ItemGroup>
     <ClCompile Include="ConfigLoader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="UserSessionManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ServerLib\ServerLib.vcxproj">
@@ -144,6 +146,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigLoader.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="UserSession.h" />
+    <ClInclude Include="UserSessionManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

@@ -23,23 +23,15 @@ namespace NetworkLib
 	{
 
 	public:
-		NetworkContext() { }
+		int Index{ 0 };
+
+		NetworkContext(int index) : Index(index) {}
 		virtual ~NetworkContext() { Reset(); }
 
 		Buffer* GetBuffer() { return &mBuffer; }
 
 		void SetContextType(const ContextType contextType) { mContextType = contextType; }
 		ContextType GetContextType() const { return mContextType; }
-
-		void OnComplete(const DWORD transferred, const DWORD error) {
-			if (mOnComplete != nullptr) {
-				mOnComplete(transferred, error, mBuffer.GetReadBuffer());
-			}
-		}
-
-		void SetOnComplete(std::function<void(const DWORD transferred, const DWORD error, uint8_t* data)> onComplete) {
-			mOnComplete = onComplete;
-		}
 
 		void Reset() {
 			mBuffer.Clear();
@@ -55,7 +47,5 @@ namespace NetworkLib
 	
 		Buffer mBuffer;
 		ContextType mContextType = ContextType::NONE;
-
-		std::function<void(const DWORD transferred, const DWORD error, uint8_t* data)> mOnComplete;
 	};
 }

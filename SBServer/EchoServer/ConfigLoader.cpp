@@ -20,11 +20,11 @@ bool ConfigLoader::LoadConfig(const char* filePath)
 	}
 
 	mNetworkConfig.mMaxSessionCount == data.value<int>("MaxSessionCount", 0);
-	mNetworkConfig.mServerAddress = data.value<std::string>("ServerAddress", "");
+	mNetworkConfig.mServerAddress = data.value<std::string>("ServerHost", "");
 	mNetworkConfig.mServerPort = data.value<int>("ServerPort", 0);
 
 	mNetworkConfig.mServerHosts.clear();
-	mNetworkConfig.mServerHosts.emplace(std::make_pair("Acceptor",
+	mNetworkConfig.mServerHosts.emplace(std::make_pair("MainServer",
 		ServerHost{ HostType::Acceptor,
 		mNetworkConfig.mServerAddress,
 		mNetworkConfig.mServerPort }));

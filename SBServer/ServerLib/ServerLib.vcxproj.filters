@@ -7,6 +7,9 @@
     <Filter Include="Network\Socket">
       <UniqueIdentifier>{ddf09e90-80a0-492b-884b-0a7a113d1eb5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Packet">
+      <UniqueIdentifier>{34211e30-951b-4d43-ac8c-78027a89b1bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientSocket.h">
@@ -31,6 +34,13 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Packet.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h" />
+    <ClInclude Include="RawPacket.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp">

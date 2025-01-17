@@ -3,6 +3,7 @@
 #include "HostSocket.h"
 #include "ClientSocket.h"
 #include "NetworkContext.h"
+#include "RawPacket.h"
 
 namespace NetworkLib
 {
@@ -58,6 +59,22 @@ namespace NetworkLib
 				std::jthread acceptThread([this, hostSocket]() { _AcceptThread(hostSocket); });
 			}
 		}
+
+		for (int i = 1; i < config.mMaxSessionCount + 1; ++i)
+		{
+			mClients.emplace_back(ClientSocket(i));
+			mClientIndexPool.push(i);
+		}
+
+		for (int i = 0; i < config.mMaxSessionCount * 2; ++i)
+		{
+			mNetworkContexts.emplace_back(NetworkContext(i));
+			mNetworkContextIndexPool.push(i);
+		}
+
+		mIsRunning = true;
+
+		return true;
 	}
 
 	std::shared_ptr<HostSocket> IOCPHandler::AddHost(const std::string& address, const uint16_t port)
@@ -100,6 +117,83 @@ namespace NetworkLib
 		return true;
 	}
 
+	bool IOCPHandler::PushPacket(NetworkContext& context, ClientSocket& client)
+	{
+		if (context.GetBuffer()->GetDataSize() < sizeof(RawPacket::Header))
+		{
+			return false;
+		}
+
+		auto rawPacket = reinterpret_cast<RawPacket*>(context.GetBuffer()->GetReadBuffer());
+
+		if (context.GetBuffer()->GetDataSize() < rawPacket->mHeader.mBodySize + sizeof(RawPacket::Header))
+		{
+			return false;
+		}
+
+		if (false == client.OnReceive())
+		{
+			context.Reset();
+			client.Close();
+			mNetworkContextIndexPool.push(context.Index);
+			mClientIndexPool.push(client.GetSessionID());
+			return false;
+		}
+
+		Packet packet{};
+		packet.mSessionID = client.GetSessionID();
+		packet.mPacketID = rawPacket->mHeader.mPacketID;
+		packet.mDataSize = rawPacket->mHeader.mBodySize;
+		packet.mDataIndex = context.Index;
+
+		std::memcpy(packet.mData.data(), rawPacket->mBody, packet.mDataSize);
+
+		mPacketQueue.push(std::move(packet));
+
+		return true;
+	}
+
+	Packet& IOCPHandler::PopPacket()
+	{
+		Packet packet{};
+		mPacketQueue.try_pop(packet);
+		return packet;
+	}
+
+	int IOCPHandler::AllocClient()
+	{
+		int index = 0;
+
+		if (false == mClientIndexPool.try_pop(index))
+		{
+			return -1;
+		}
+
+		return index;
+	}
+
+	int IOCPHandler::AllocNetworkContext()
+	{
+		int index = 0;
+
+		if (false == mNetworkContextIndexPool.try_pop(index))
+		{
+			return -1;
+		}
+
+		return index;
+	}
+
+	void IOCPHandler::ReleaseClient(int index)
+	{
+		mClientIndexPool.push(index);
+	}
+
+	void IOCPHandler::ReleaseNetworkContext(int index)
+	{
+		mNetworkContextIndexPool.push(index);
+	}
+
 	void IOCPHandler::_IOThread()
 	{
 		while (mIsRunning)
@@ -112,7 +206,6 @@ namespace NetworkLib
 
 			if (result == FALSE)
 			{
-				DWORD error = GetLastError();
 				continue;
 			}
 
@@ -128,6 +221,33 @@ namespace NetworkLib
 			{
 				continue;
 			}
+
+			switch (context->GetContextType())
+			{
+			case ContextType::RECEIVE:
+			{
+				if (transferred == 0)
+				{
+					client->Close();
+					ReleaseClient(client->GetSessionID());
+					break;
+				}
+
+				PushPacket(*context, *client);
+
+				if (false == client->Receive(context))
+				{
+					client->Close();
+					ReleaseClient(client->GetSessionID());
+				}
+
+			}
+			break;
+
+			default:
+				break;
+			}
+
 		}
 	}
 
@@ -149,17 +269,52 @@ namespace NetworkLib
 				continue;
 			}
 
-			auto client = std::make_shared<ClientSocket>(clientSocket);
+			int clientIndex = AllocClient();
+			int contextIndex = AllocNetworkContext();
 
-			if (false == Register(client->GetSocket()))
+			if (clientIndex < 0 ||
+				contextIndex < 0)
 			{
-				client->Close();
+				closesocket(clientSocket);
+				continue;
 			}
 
-			if (false == client->OnConnect())
+			ClientSocket client = mClients[clientIndex];
+
+			if (false == InitClient(client))
 			{
-				client->Close();
+				ReleaseClient(clientIndex);
+				continue;
 			}
+
+			auto& context = mNetworkContexts[contextIndex];
+
+			context.Reset();
+			context.SetContextType(ContextType::RECEIVE);
+
+			if (false == client.Receive(&context))
+			{
+				closesocket(clientSocket);
+				ReleaseClient(clientIndex);
+				ReleaseNetworkContext(contextIndex);
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
+	}
+
+	bool IOCPHandler::InitClient(NetworkLib::ClientSocket& client)
+	{
+		if (false == Register(client.GetSocket()))
+		{
+			client.Close();
+		}
+
+		if (false == client.OnConnect())
+		{
+			client.Close();
+		}
+
+		return true;
 	}
 }

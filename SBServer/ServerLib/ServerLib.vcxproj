@@ -26,7 +26,10 @@
     <ClInclude Include="NetworkConfig.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkSocket.h" />
+    <ClInclude Include="Packet.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RawPacket.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp" />

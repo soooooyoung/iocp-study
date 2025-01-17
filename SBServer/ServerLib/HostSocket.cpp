@@ -22,6 +22,11 @@ namespace NetworkLib {
 			return false;
 		}
 
+		if (false == SetSocketReusable(mSocket))
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -50,6 +55,8 @@ namespace NetworkLib {
 			printf_s("bind() Error: %d\n", WSAGetLastError());
 			return false;
 		}
+
+		return true;
 	}
 
 	SOCKADDR_IN HostSocket::_ResolveAddress(const std::string& host)

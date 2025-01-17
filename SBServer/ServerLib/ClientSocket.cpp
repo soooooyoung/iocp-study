@@ -16,17 +16,38 @@ namespace NetworkLib
 			return false;
 		}
 
-		if (false == SetSocketNonBlocking(mSocket))
-		{
-			return false;
-		}
-
 		if (false == SetSocketNoDelay(mSocket))
 		{
 			return false;
 		}
 
+		if (false == SetSocketNonBlocking(mSocket))
+		{
+			return false;
+		}
+
 		mIsConnected = true;
+
+		mReceiveCount = 0;
+		mReceiveTimer.Reset();
+
+		return true;
+	}
+
+	bool ClientSocket::OnReceive()
+	{
+		if (mReceiveTimer.Update())
+		{
+			return true;
+		}
+
+		mReceiveCount++;
+
+		if (mReceiveCount > MAX_PACKETS_PER_CLIENT)
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -39,7 +60,7 @@ namespace NetworkLib
 
 		DWORD sendBytes = 0;
 		DWORD flags = 0;
-		WSABUF wsaBuf = {};
+		WSABUF wsaBuf{};
 
 		wsaBuf.buf = (char*)context->GetBuffer()->GetReadBuffer();
 		wsaBuf.len = context->GetBuffer()->GetDataSize();
@@ -67,7 +88,7 @@ namespace NetworkLib
 
 		DWORD recvBytes = 0;
 		DWORD flags = 0;
-		WSABUF wsaBuf = {};
+		WSABUF wsaBuf{};
 
 		wsaBuf.buf = (char*)context->GetBuffer()->GetWriteBuffer();
 		wsaBuf.len = context->GetBuffer()->GetRemainSize();
@@ -87,12 +108,16 @@ namespace NetworkLib
 
 	void ClientSocket::Close()
 	{
-		struct linger stLinger = { 0,0 }; 
+		if (mSocket != INVALID_SOCKET)
+		{
+			struct linger stLinger = { 0,0 }; 
 
-		shutdown(mSocket, SD_BOTH);
-		setsockopt(mSocket, SOL_SOCKET, SO_LINGER, (char*)&stLinger, sizeof(stLinger));
-		closesocket(mSocket);
+			shutdown(mSocket, SD_BOTH);
+			setsockopt(mSocket, SOL_SOCKET, SO_LINGER, (char*)&stLinger, sizeof(stLinger));
+			closesocket(mSocket);
+		}
 
 		mSocket = INVALID_SOCKET;
 	}
+
 }

@@ -1,19 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="ConfigLoader.cpp">
       <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Server</Filter>
+    </ClCompile>
+    <ClCompile Include="UserSessionManager.cpp">
+      <Filter>Session</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Config">
       <UniqueIdentifier>{d2e55491-1075-4bc2-a133-432196fdc4cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Server">
+      <UniqueIdentifier>{8f9e690b-78e9-4e1f-a2b5-79fdf61f4159}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Session">
+      <UniqueIdentifier>{934f97e2-ad7e-4d14-91dc-a64c354a075f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigLoader.h">
       <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+    <ClInclude Include="UserSession.h">
+      <Filter>Session</Filter>
+    </ClInclude>
+    <ClInclude Include="UserSessionManager.h">
+      <Filter>Session</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

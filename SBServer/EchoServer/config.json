@@ -1,5 +1,5 @@
 {
-  "ServerHost": "127.0.0.1",
+  "ServerAddress": "http://127.0.0.1",
   "ServerPort": 8000,
   "MaxSessionCount": 100
 }
