@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <memory>
 #include <WinSock2.h>
+#include <functional>
+
+#include "Buffer.h"
 
 namespace NetworkLib
 {
@@ -18,25 +21,41 @@ namespace NetworkLib
 
 	class NetworkContext : public OVERLAPPED, public std::enable_shared_from_this<NetworkContext>
 	{
+
 	public:
-		NetworkContext();
-		virtual ~NetworkContext();
+		NetworkContext() { }
+		virtual ~NetworkContext() { Reset(); }
 
-		virtual void OnComplete(const DWORD transferred, const DWORD error);
+		Buffer GetBuffer() { return mBuffer; }
 
-		void SetBuffer(char* buffer);
-		char* GetBuffer();
-		void SetSize(const int32_t size);
-		int32_t GetSize() const;
+		void SetContextType(const ContextType contextType) { mContextType = contextType; }
+		ContextType GetContextType() const { return mContextType; }
 
-		void SetContextType(const ContextType contextType);
-		ContextType GetContextType() const;
+		void OnComplete(const DWORD transferred, const DWORD error) {
+			if (mOnComplete != nullptr) {
+				mOnComplete(transferred, error, mBuffer.GetReadBuffer());
+			}
+		}
 
-		virtual void Reset();
+		void SetOnComplete(std::function<void(const DWORD transferred, const DWORD error, uint8_t* data)> onComplete) {
+			mOnComplete = onComplete;
+		}
+
+		void Reset() {
+			mBuffer.Clear();
+
+			Internal = 0;
+			InternalHigh = 0;
+			Offset = 0;
+			OffsetHigh = 0;
+			hEvent = nullptr;
+		}
+
 	protected:
-		char* mBuffer = nullptr;
-		int32_t mSize = 0;
-
+	
+		Buffer mBuffer;
 		ContextType mContextType = ContextType::NONE;
+
+		std::function<void(const DWORD transferred, const DWORD error, uint8_t* data)> mOnComplete;
 	};
 }

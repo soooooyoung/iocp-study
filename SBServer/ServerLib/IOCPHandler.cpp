@@ -127,8 +127,6 @@ namespace NetworkLib
 			{
 				continue;
 			}
-
-			context->OnComplete(transferred, 0);
 		}
 	}
 
