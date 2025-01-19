@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "HostSocket.h"
 #include "NetworkContext.h"
+#include "spdlog/spdlog.h"
 
 namespace NetworkLib {
 
@@ -18,7 +19,7 @@ namespace NetworkLib {
 		mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSA_FLAG_OVERLAPPED);
 		if (mSocket == INVALID_SOCKET)
 		{
-			printf_s("socket() Error: %d\n", WSAGetLastError());
+			spdlog::error("WSASocket Creation Error: {}", WSAGetLastError());
 			return false;
 		}
 
@@ -52,11 +53,10 @@ namespace NetworkLib {
 		if (bind(mSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) != 0)
 		{
 			closesocket(mSocket);
-			printf_s("bind() Error: %d\n", WSAGetLastError());
+			spdlog::error("Server Bind Error: {}", WSAGetLastError());
 			return false;
 		}
 
-		printf_s("Server Bind : %s %d\n", address.c_str(), port);
 		return true;
 	}
 
@@ -89,7 +89,7 @@ namespace NetworkLib {
 		if (listen(mSocket, SOMAXCONN) != 0)
 		{
 			closesocket(mSocket);
-			printf_s("listen() Error: %d\n", WSAGetLastError());
+			spdlog::error("Server Listen Error: {}", WSAGetLastError());
 			return false;
 		}
 
@@ -102,8 +102,15 @@ namespace NetworkLib {
 
 		if (clientSocket == INVALID_SOCKET)
 		{
-			printf_s("accept() Error: %d\n", WSAGetLastError());
+			spdlog::error("Accept Error: {}", WSAGetLastError());
 		}
+
+		if (SOCKET_ERROR == setsockopt(clientSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&mSocket, sizeof(mSocket)))
+		{
+			spdlog::error("setsockopt SO_UPDATE_ACCEPT_CONTEXT Error: {}", WSAGetLastError());
+			return INVALID_SOCKET;
+		}
+
 		return clientSocket;
 	}
 
@@ -117,7 +124,7 @@ namespace NetworkLib {
 
 		if (FALSE == AcceptEx(mSocket,
 			socket,
-			(LPVOID)context->GetBuffer(),
+			(LPVOID)context->mBuffer,
 			0,
 			sizeof(SOCKADDR_IN) + 16,
 			sizeof(SOCKADDR_IN) + 16,
@@ -126,7 +133,7 @@ namespace NetworkLib {
 		{
 			if (WSAGetLastError() != ERROR_IO_PENDING)
 			{
-				printf_s("AcceptEx() Error: %d\n", WSAGetLastError());
+				spdlog::error("AcceptEx Error: {}", WSAGetLastError());
 				return false;
 			}
 		}

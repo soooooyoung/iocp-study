@@ -53,21 +53,18 @@ namespace NetworkLib
 		return true;
 	}
 
-	bool ClientSocket::Send(NetworkContext* context)
+	bool ClientSocket::Send(NetworkContext& context)
 	{
-		if (context == nullptr)
-		{
-			return false;
-		}
+		Buffer* buffer = context.mBuffer;
 
 		DWORD sendBytes = 0;
 		DWORD flags = 0;
 		WSABUF wsaBuf{};
 
-		wsaBuf.buf = (char*)context->GetBuffer()->GetReadBuffer();
-		wsaBuf.len = context->GetBuffer()->GetDataSize();
+		wsaBuf.buf = (char*)buffer->GetReadBuffer();
+		wsaBuf.len = buffer->GetDataSize();
 
-		int result = WSASend(mSocket, &wsaBuf, 1, &sendBytes, flags, (LPWSAOVERLAPPED)context, nullptr);
+		int result = WSASend(mSocket, &wsaBuf, 1, &sendBytes, flags, (LPWSAOVERLAPPED)&context, nullptr);
 
 		if (result == SOCKET_ERROR)
 		{
@@ -82,24 +79,23 @@ namespace NetworkLib
 		return true;
 	}
 
-	bool ClientSocket::Receive(NetworkContext* context)
+	bool ClientSocket::Receive(NetworkContext& context)
 	{
-		if (context == nullptr)
-		{
-			return false;
-		}
+		Buffer* buffer = context.mBuffer;
 
 		DWORD recvBytes = 0;
 		DWORD flags = 0;
 		WSABUF wsaBuf{};
 
-		wsaBuf.buf = (char*)context->GetBuffer()->GetWriteBuffer();
-		wsaBuf.len = context->GetBuffer()->GetRemainSize();
+		wsaBuf.buf = (char*)buffer->GetWriteBuffer();
+		wsaBuf.len = buffer->GetRemainSize();
 
-		int result = WSARecv(mSocket, &wsaBuf, 1, &recvBytes, &flags, (LPWSAOVERLAPPED)context, nullptr);
+		int result = WSARecv(mSocket, &wsaBuf, 1, &recvBytes, &flags, (LPWSAOVERLAPPED)&context, nullptr);
+
 		if (result == SOCKET_ERROR)
 		{
 			int error = WSAGetLastError();
+
 			if (error != WSA_IO_PENDING)
 			{
 				spdlog::error("WSARecv Error:{}", error);

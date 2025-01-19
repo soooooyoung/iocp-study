@@ -29,13 +29,16 @@ namespace NetworkLib {
 		void LogError(const char* format, Args&&... args)
 		{
 			mErrorLogger->error(fmt::runtime(format), std::forward<Args>(args)...);
+			mFileLogger->info(fmt::runtime(format), std::forward<Args>(args)...);
 		}
 
 	private:
+		// Sync Loggers
 		std::shared_ptr<spdlog::logger> mConsoleLogger;
 		std::shared_ptr<spdlog::logger> mFileLogger;
 		std::shared_ptr<spdlog::logger> mErrorLogger;
 
+		// Async Logger
 		std::shared_ptr<spdlog::async_logger> mAsyncLogger;
 	};
 }

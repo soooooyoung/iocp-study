@@ -24,8 +24,8 @@ namespace NetworkLib
 		bool OnConnect();
 		bool OnReceive();
 
-		bool Send(NetworkContext* context);
-		bool Receive(NetworkContext* context);
+		bool Send(NetworkContext& context);
+		bool Receive(NetworkContext& context);
 		void Close();
 
 		bool IsConnected() const { return mIsConnected; }

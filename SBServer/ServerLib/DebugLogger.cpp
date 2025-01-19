@@ -36,17 +36,6 @@ namespace NetworkLib
 
 	void DebugLogger::InitializeAsync(const char* loggerName)
 	{
-		// ErrorHandler
-		mErrorLogger = spdlog::stderr_color_mt("ERROR");
-
-#ifdef DEBUG
-		spdlog::set_error_handler([](const std::string& msg)
-			{
-				spdlog::get("ERROR")->error("Logger Error: {}", msg);
-			});
-#endif // DEBUG
-
-		// Async Logger
 		spdlog::init_thread_pool(8192, 1);
 
 		auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -58,5 +47,9 @@ namespace NetworkLib
 
 		spdlog::register_logger(mAsyncLogger);
 		spdlog::set_default_logger(mAsyncLogger);
+		spdlog::set_error_handler([](const std::string& msg)
+			{
+				spdlog::default_logger()->error("Logger Error: {}", msg);
+			});
 	}
 }

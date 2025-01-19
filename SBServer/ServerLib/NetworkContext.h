@@ -19,33 +19,29 @@ namespace NetworkLib
 		RECEIVE
 	};
 
-	class NetworkContext : public OVERLAPPED, public std::enable_shared_from_this<NetworkContext>
+	class NetworkContext : public OVERLAPPED
 	{
-
 	public:
-		int Index{ 0 };
-
-		NetworkContext(int index) : Index(index) {}
+		NetworkContext(int index) : Index(index)
+		{ mBuffer = new Buffer(); };
 		virtual ~NetworkContext() { Reset(); }
-
-		Buffer* GetBuffer() { return &mBuffer; }
 
 		void SetContextType(const ContextType contextType) { mContextType = contextType; }
 		ContextType GetContextType() const { return mContextType; }
 
 		void Reset() {
-			mBuffer.Clear();
-
 			Internal = 0;
 			InternalHigh = 0;
 			Offset = 0;
 			OffsetHigh = 0;
 			hEvent = nullptr;
+	
+			mBuffer->Clear();
 		}
 
+		int Index{ 0 };
+		Buffer* mBuffer;
 	protected:
-	
-		Buffer mBuffer;
 		ContextType mContextType = ContextType::NONE;
 	};
 }

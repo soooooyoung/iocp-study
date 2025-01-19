@@ -5,8 +5,10 @@
 #include <thread>
 #include <memory>
 #include <array>
+#include <algorithm>
 #include <functional>
 #include <concurrent_queue.h>
+#include <concurrent_vector.h>
 
 #include "NetworkConfig.h"
 #include "ClientSocket.h"
@@ -26,8 +28,8 @@ namespace NetworkLib
 		bool Initialize(const NetworkConfig& config);
 		std::shared_ptr<HostSocket> AddHost(const std::string& address, const uint16_t port);
 
-		bool Register(const SOCKET& socket);
-		bool InitClient(NetworkLib::ClientSocket& client);
+		bool Register(const SOCKET& socket, const NetworkSocket* completionKey);
+		bool InitClient(NetworkLib::ClientSocket& client, SOCKET socket);
 
 		bool PushPacket(NetworkContext& context, ClientSocket& client);
 		Packet& PopPacket();
@@ -40,12 +42,13 @@ namespace NetworkLib
 
 		bool HasPacket() const { return mPacketQueue.empty() == false; }
 
+		void IOThread();
+
 	private:
 		HANDLE mIOCPHandle = INVALID_HANDLE_VALUE;
 		std::vector<std::thread> mIOThreadPool;
 		std::vector<std::shared_ptr<HostSocket>> mHostSockets;
 
-		void _IOThread();
 		void _AcceptThread(std::weak_ptr<HostSocket> hostSocket);
 
 		bool mIsRunning = false;

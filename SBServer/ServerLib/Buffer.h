@@ -11,6 +11,7 @@ namespace NetworkLib {
 	public:
 		Buffer() : mBuffer(DEFAULT_BUFFER_SIZE)
 		{
+
 		}
 
 		virtual ~Buffer()
@@ -23,7 +24,6 @@ namespace NetworkLib {
 			mReadPos = 0;
 			mWritePos = 0;
 			mBuffer.clear();
-			mBuffer.resize(DEFAULT_BUFFER_SIZE);
 		}
 
 		void AlignBuffer()
@@ -83,6 +83,16 @@ namespace NetworkLib {
 
 		bool Write(int size)
 		{
+			if (GetRemainSize() < size)
+			{
+				AlignBuffer();
+
+				if (MAX_BUFFER_SIZE < mBuffer.size() + size)
+				{
+					return false;
+				}
+			}
+
 			mWritePos += size;
 			return true;
 		}

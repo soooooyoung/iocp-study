@@ -52,7 +52,7 @@ namespace NetworkLib
 			mClientIndexPool.push(i);
 		}
 
-		for (int i = 1; i < 1000; ++i)
+		for (int i = 0; i < 1000; ++i)
 		{
 			mNetworkContexts.emplace_back(NetworkContext(i));
 			mNetworkContextIndexPool.push(i);
@@ -60,7 +60,7 @@ namespace NetworkLib
 
 		for (int i = 0; i < systemInfo.dwNumberOfProcessors; ++i)
 		{
-			mIOThreadPool.emplace_back([this]() { _IOThread(); });
+			mIOThreadPool.emplace_back([this]() { IOThread(); });
 		}
 
 		for (auto& host : config.mServerHosts)
@@ -100,7 +100,7 @@ namespace NetworkLib
 			return nullptr;
 		}
 
-		if (false == Register(hostSocket->GetSocket()))
+		if (false == Register(hostSocket->GetSocket(), hostSocket.get()))
 		{
 			return nullptr;
 		}
@@ -111,9 +111,9 @@ namespace NetworkLib
 		return hostSocket;
 	}
 
-	bool IOCPHandler::Register(const SOCKET& socket)
+	bool IOCPHandler::Register(const SOCKET& socket, const NetworkSocket* completionKey)
 	{
-		HANDLE handle = CreateIoCompletionPort((HANDLE)socket, mIOCPHandle, 0, 0);
+		HANDLE handle = CreateIoCompletionPort((HANDLE)socket, mIOCPHandle, (ULONG_PTR)completionKey, 0);
 
 		if (handle == NULL)
 		{
@@ -125,14 +125,14 @@ namespace NetworkLib
 
 	bool IOCPHandler::PushPacket(NetworkContext& context, ClientSocket& client)
 	{
-		if (context.GetBuffer()->GetDataSize() < sizeof(RawPacket::Header))
+		if (context.mBuffer->GetDataSize() < sizeof(RawPacket::Header))
 		{
 			return false;
 		}
 
-		auto rawPacket = reinterpret_cast<RawPacket*>(context.GetBuffer()->GetReadBuffer());
+		auto rawPacket = reinterpret_cast<RawPacket*>(context.mBuffer->GetReadBuffer());
 
-		if (context.GetBuffer()->GetDataSize() < rawPacket->mHeader.mBodySize + sizeof(RawPacket::Header))
+		if (context.mBuffer->GetDataSize() < rawPacket->mHeader.mBodySize + sizeof(RawPacket::Header))
 		{
 			return false;
 		}
@@ -154,7 +154,7 @@ namespace NetworkLib
 
 		std::memcpy(packet.mData.data(), rawPacket->mBody, packet.mDataSize);
 
-		mLogger->LogAsync("PushPacket SessionID:{} PacketID:{} DataSize:{}", packet.mSessionID, packet.mPacketID, packet.mDataSize);
+		mLogger->LogAsync("Received Packet SessionID:{} PacketID:{} DataSize:{}", packet.mSessionID, packet.mPacketID, packet.mDataSize);
 
 		mPacketQueue.push(std::move(packet));
 		return true;
@@ -201,7 +201,7 @@ namespace NetworkLib
 		mNetworkContextIndexPool.push(index);
 	}
 
-	void IOCPHandler::_IOThread()
+	void IOCPHandler::IOThread()
 	{
 		while (mIsRunning)
 		{
@@ -221,7 +221,6 @@ namespace NetworkLib
 
 			if (result == TRUE && transferred == 0 && overlapped == nullptr) 
 			{
-
 				if (client != nullptr)
 				{
 					client->Close();
@@ -232,7 +231,6 @@ namespace NetworkLib
 				continue;
 			}
 
-
 			if (context == nullptr)
 			{
 				continue;
@@ -242,19 +240,22 @@ namespace NetworkLib
 			{
 			case ContextType::RECEIVE:
 			{
+				spdlog::info("Received Data SessionID:{} Size:{}", client->GetSessionID(), transferred);
+
+				context->mBuffer->Write(transferred);
+
 				PushPacket(*context, *client);
 
-				if (false == client->Receive(context))
+				if (false == client->Receive(*context))
 				{
 					client->Close();
 					ReleaseClient(client->GetSessionID());
 				}
-
 			}
-			break;
+			continue;
 
 			default:
-				break;
+				continue;
 			}
 
 		}
@@ -278,7 +279,7 @@ namespace NetworkLib
 				continue;
 			}
 
-			mLogger->LogAsync("AcceptThread ClientSocket:{}", clientSocket);
+			mLogger->LogAsync("Accepted ClientSocket:{}", clientSocket);
 
 			int clientIndex = AllocClient();
 			int contextIndex = AllocNetworkContext();
@@ -291,9 +292,8 @@ namespace NetworkLib
 			}
 
 			auto& client = mClients[clientIndex];
-			client.SetSocket(clientSocket);
 
-			if (false == InitClient(client))
+			if (false == InitClient(client, clientSocket))
 			{
 				ReleaseClient(clientIndex);
 				continue;
@@ -304,7 +304,7 @@ namespace NetworkLib
 			context.Reset();
 			context.SetContextType(ContextType::RECEIVE);
 
-			if (false == client.Receive(&context))
+			if (false == client.Receive(context))
 			{
 				closesocket(clientSocket);
 				ReleaseClient(clientIndex);
@@ -315,9 +315,11 @@ namespace NetworkLib
 		}
 	}
 
-	bool IOCPHandler::InitClient(NetworkLib::ClientSocket& client)
+	bool IOCPHandler::InitClient(NetworkLib::ClientSocket& client, SOCKET socket)
 	{
-		if (false == Register(client.GetSocket()))
+		client.SetSocket(socket);
+
+		if (false == Register(client.GetSocket(), &client))
 		{
 			client.Close();
 		}
@@ -326,6 +328,8 @@ namespace NetworkLib
 		{
 			client.Close();
 		}
+
+		spdlog::info("Client SessionID:{} Connected", client.GetSessionID());
 
 		return true;
 	}
