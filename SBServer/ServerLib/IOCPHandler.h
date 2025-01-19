@@ -15,7 +15,7 @@
 
 namespace NetworkLib
 {
-
+	class DebugLogger;
 	class HostSocket;
 	class IOCPHandler
 	{
@@ -48,7 +48,6 @@ namespace NetworkLib
 		void _IOThread();
 		void _AcceptThread(std::weak_ptr<HostSocket> hostSocket);
 
-
 		bool mIsRunning = false;
 
 		std::vector<ClientSocket> mClients;
@@ -58,5 +57,7 @@ namespace NetworkLib
 		concurrency::concurrent_queue<int> mNetworkContextIndexPool;
 
 		concurrency::concurrent_queue<Packet> mPacketQueue;
+
+		std::unique_ptr<DebugLogger> mLogger;
 	};
 }

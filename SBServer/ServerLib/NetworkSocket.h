@@ -12,6 +12,7 @@ namespace NetworkLib
 
 		bool SetSocketReusable(const SOCKET& socket);
 		bool SetSocketNonBlocking(const SOCKET& socket);
+		bool SetSocketBlocking(const SOCKET& socket);
 		bool SetSocketNoDelay(const SOCKET& socket);
 
 		SOCKET GetSocket() const { return mSocket; }

@@ -56,6 +56,7 @@ namespace NetworkLib {
 			return false;
 		}
 
+		printf_s("Server Bind : %s %d\n", address.c_str(), port);
 		return true;
 	}
 
@@ -103,7 +104,6 @@ namespace NetworkLib {
 		{
 			printf_s("accept() Error: %d\n", WSAGetLastError());
 		}
-
 		return clientSocket;
 	}
 

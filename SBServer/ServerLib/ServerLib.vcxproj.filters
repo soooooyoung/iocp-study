@@ -10,6 +10,9 @@
     <Filter Include="Packet">
       <UniqueIdentifier>{34211e30-951b-4d43-ac8c-78027a89b1bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{7db556be-94d6-49e4-b3e1-b4d2891ecf95}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientSocket.h">
@@ -41,6 +44,9 @@
     <ClInclude Include="RawPacket.h">
       <Filter>Packet</Filter>
     </ClInclude>
+    <ClInclude Include="DebugLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp">
@@ -56,5 +62,8 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="DebugLogger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ClientSocket.h"
 #include "NetworkContext.h"
+#include "spdlog/spdlog.h"
 
 namespace NetworkLib
 {
@@ -45,6 +46,7 @@ namespace NetworkLib
 
 		if (mReceiveCount > MAX_PACKETS_PER_CLIENT)
 		{
+			spdlog::error("ClientSocket Receive OverFlow");
 			return false;
 		}
 
@@ -72,6 +74,7 @@ namespace NetworkLib
 			int error = WSAGetLastError();
 			if (error != WSA_IO_PENDING)
 			{
+				spdlog::error("WSASend Error:{}", error);
 				return false;
 			}
 		}
@@ -99,6 +102,7 @@ namespace NetworkLib
 			int error = WSAGetLastError();
 			if (error != WSA_IO_PENDING)
 			{
+				spdlog::error("WSARecv Error:{}", error);
 				return false;
 			}
 		}

@@ -30,6 +30,19 @@ namespace NetworkLib
 		return true;
 	}
 
+	bool NetworkSocket::SetSocketBlocking(const SOCKET& socket)
+	{
+		unsigned long ul = 0;
+		/* ioctlsocket */
+		// Windows-specific function used to manipulate the mode of a socket.
+		if (SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &ul))
+		{
+			return false;
+		}
+		return true;
+	}
+
+
 	bool NetworkSocket::SetSocketNoDelay(const SOCKET& socket)
 	{
 		int flag = 1;

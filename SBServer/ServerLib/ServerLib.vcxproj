@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="ClientSocket.h" />
+    <ClInclude Include="DebugLogger.h" />
     <ClInclude Include="HostSocket.h" />
     <ClInclude Include="IOCPHandler.h" />
     <ClInclude Include="NetworkConfig.h" />
@@ -33,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientSocket.cpp" />
+    <ClCompile Include="DebugLogger.cpp" />
     <ClCompile Include="HostSocket.cpp" />
     <ClCompile Include="IOCPHandler.cpp" />
     <ClCompile Include="NetworkSocket.cpp" />

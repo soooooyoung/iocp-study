@@ -4,6 +4,7 @@
 #include "ClientSocket.h"
 #include "NetworkContext.h"
 #include "RawPacket.h"
+#include "DebugLogger.h"
 
 namespace NetworkLib
 {
@@ -30,6 +31,9 @@ namespace NetworkLib
 
 	bool IOCPHandler::Initialize(const NetworkConfig& config)
 	{
+		mLogger = std::make_unique<DebugLogger>();
+		mLogger->InitializeAsync();
+
 		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);
 
@@ -38,6 +42,20 @@ namespace NetworkLib
 		if (mIOCPHandle == INVALID_HANDLE_VALUE)
 		{
 			return false;
+		}
+
+		mIsRunning = true;
+
+		for (int i = 1; i < 111; ++i)
+		{
+			mClients.emplace_back(ClientSocket(i));
+			mClientIndexPool.push(i);
+		}
+
+		for (int i = 1; i < 1000; ++i)
+		{
+			mNetworkContexts.emplace_back(NetworkContext(i));
+			mNetworkContextIndexPool.push(i);
 		}
 
 		for (int i = 0; i < systemInfo.dwNumberOfProcessors; ++i)
@@ -59,20 +77,6 @@ namespace NetworkLib
 				std::jthread acceptThread([this, hostSocket]() { _AcceptThread(hostSocket); });
 			}
 		}
-
-		for (int i = 1; i < config.mMaxSessionCount + 1; ++i)
-		{
-			mClients.emplace_back(ClientSocket(i));
-			mClientIndexPool.push(i);
-		}
-
-		for (int i = 0; i < config.mMaxSessionCount * 2; ++i)
-		{
-			mNetworkContexts.emplace_back(NetworkContext(i));
-			mNetworkContextIndexPool.push(i);
-		}
-
-		mIsRunning = true;
 
 		return true;
 	}
@@ -102,6 +106,8 @@ namespace NetworkLib
 		}
 
 		mHostSockets.emplace_back(hostSocket);
+		mLogger->LogAsync("AddHost {}:{}", address, port);
+
 		return hostSocket;
 	}
 
@@ -148,8 +154,9 @@ namespace NetworkLib
 
 		std::memcpy(packet.mData.data(), rawPacket->mBody, packet.mDataSize);
 
-		mPacketQueue.push(std::move(packet));
+		mLogger->LogAsync("PushPacket SessionID:{} PacketID:{} DataSize:{}", packet.mSessionID, packet.mPacketID, packet.mDataSize);
 
+		mPacketQueue.push(std::move(packet));
 		return true;
 	}
 
@@ -209,13 +216,22 @@ namespace NetworkLib
 				continue;
 			}
 
-			if (result == TRUE && transferred == 0 && overlapped == nullptr)
+			auto context = reinterpret_cast<NetworkContext*>(overlapped);
+			auto client = reinterpret_cast<ClientSocket*>(completionKey);
+
+			if (result == TRUE && transferred == 0 && overlapped == nullptr) 
 			{
+
+				if (client != nullptr)
+				{
+					client->Close();
+					ReleaseClient(client->GetSessionID());
+					spdlog::info("Client SessionID:{} Disconnected", client->GetSessionID());
+				}
+
 				continue;
 			}
 
-			auto context = reinterpret_cast<NetworkContext*>(overlapped);
-			auto client = reinterpret_cast<ClientSocket*>(completionKey);
 
 			if (context == nullptr)
 			{
@@ -226,13 +242,6 @@ namespace NetworkLib
 			{
 			case ContextType::RECEIVE:
 			{
-				if (transferred == 0)
-				{
-					client->Close();
-					ReleaseClient(client->GetSessionID());
-					break;
-				}
-
 				PushPacket(*context, *client);
 
 				if (false == client->Receive(context))
@@ -269,6 +278,8 @@ namespace NetworkLib
 				continue;
 			}
 
+			mLogger->LogAsync("AcceptThread ClientSocket:{}", clientSocket);
+
 			int clientIndex = AllocClient();
 			int contextIndex = AllocNetworkContext();
 
@@ -279,7 +290,8 @@ namespace NetworkLib
 				continue;
 			}
 
-			ClientSocket client = mClients[clientIndex];
+			auto& client = mClients[clientIndex];
+			client.SetSocket(clientSocket);
 
 			if (false == InitClient(client))
 			{
